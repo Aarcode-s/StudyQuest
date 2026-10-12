@@ -10,7 +10,8 @@ from app.models.room_member import RoomMember
 from app.models.user import User
 from app.schemas.status import MemberStatus, RoomStatus
 from app.services.rooms import NotAMemberError, get_membership
-from app.services.sessions import _is_stale, focus_seconds
+
+from app.services.sessions import _is_stale, _now, focus_seconds
 
 
 def _start_of_today_utc(now: datetime) -> datetime:
@@ -23,7 +24,7 @@ def get_room_status(db: Session, room_id: int, user_id: int) -> RoomStatus:
     if get_membership(db, room_id, user_id) is None:
         raise NotAMemberError
 
-    now = datetime.now(timezone.utc)
+    now = _now()
     day_start = _start_of_today_utc(now)
 
     members = db.execute(
@@ -46,7 +47,9 @@ def get_room_status(db: Session, room_id: int, user_id: int) -> RoomStatus:
     active: dict[int, FocusSession] = {}
     for s in sessions:
         if s.started_at >= day_start:
-            today_total[s.user_id] = today_total.get(s.user_id, 0) + focus_seconds(s, now)
+            today_total[s.user_id] = today_total.get(s.user_id, 0) + focus_seconds(
+                s, now
+            )
         if s.status in ("focusing", "paused"):
             active[s.user_id] = s
 

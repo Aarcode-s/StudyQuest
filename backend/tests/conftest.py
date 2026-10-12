@@ -87,3 +87,20 @@ def _register_and_login(client: TestClient, name: str) -> dict:
 def make_user(client):
     """Call make_user('alice') to get a registered, logged-in user."""
     return lambda name: _register_and_login(client, name)
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+
+class Clock:
+    def __init__(self, monkeypatch):
+        self.now = datetime.now(timezone.utc)
+        for module in ("app.services.sessions", "app.services.status"):
+            monkeypatch.setattr(f"{module}._now", lambda: self.now, raising=False)
+
+    def advance(self, seconds: int):
+        self.now += timedelta(seconds=seconds)
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    return Clock(monkeypatch)
