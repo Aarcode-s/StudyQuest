@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     rate_limit_enabled: bool = True
     trust_proxy_headers: bool = False
+    session_heartbeat_grace_seconds: int = 90
 
     model_config = SettingsConfigDict(
         env_file=".env",

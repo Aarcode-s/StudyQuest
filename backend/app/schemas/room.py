@@ -26,3 +26,14 @@ class RoomRead(BaseModel):
     role: str
     member_count: int
     created_at: datetime
+
+
+class MemberRead(BaseModel):
+    user_id: int
+    username: str
+    role: str
+    joined_at: datetime
+
+
+class RoomDetail(RoomRead):
+    members: list[MemberRead]

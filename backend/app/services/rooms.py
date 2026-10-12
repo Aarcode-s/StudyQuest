@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.models.room import Room
 from app.models.room_member import RoomMember
-from app.schemas.room import RoomRead
+from app.models.user import User
+from app.schemas.room import MemberRead, RoomDetail, RoomRead
 
 # No 0/O or 1/I, to avoid look-alike mistakes when typing a code.
 _ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -18,6 +19,14 @@ class InvalidInviteCodeError(Exception):
 
 class AlreadyMemberError(Exception):
     """The user is already in this room."""
+
+
+class NotAMemberError(Exception):
+    """Room doesn't exist or the user isn't in it (deliberately indistinguishable)."""
+
+
+class OwnerCannotLeaveError(Exception):
+    """Owner still has other members in the room."""
 
 
 def generate_invite_code(length: int = 8) -> str:
@@ -85,3 +94,64 @@ def list_rooms(db: Session, user_id: int) -> list[RoomRead]:
         .order_by(RoomMember.joined_at.desc())
     )
     return [_to_read(room, role, n) for room, role, n in db.execute(stmt)]
+
+
+def get_membership(db: Session, room_id: int, user_id: int) -> RoomMember | None:
+    return db.scalar(
+        select(RoomMember).where(
+            RoomMember.room_id == room_id, RoomMember.user_id == user_id
+        )
+    )
+
+
+def get_room_detail(db: Session, room_id: int, user_id: int) -> RoomDetail:
+    membership = get_membership(db, room_id, user_id)
+    if membership is None:
+        raise NotAMemberError
+
+    room = db.get(Room, room_id)
+    rows = db.execute(
+        select(RoomMember, User.username)
+        .join(User, User.id == RoomMember.user_id)
+        .where(RoomMember.room_id == room_id)
+        .order_by(RoomMember.joined_at)
+    ).all()
+    members = [
+        MemberRead(
+            user_id=m.user_id, username=username, role=m.role, joined_at=m.joined_at
+        )
+        for m, username in rows
+    ]
+    return RoomDetail(
+        id=room.id,
+        name=room.name,
+        invite_code=room.invite_code,
+        role=membership.role,
+        member_count=len(members),
+        created_at=room.created_at,
+        members=members,
+    )
+
+
+def leave_room(db: Session, room_id: int, user_id: int) -> None:
+    # Imported here because sessions.py imports this module (circular import).
+    from app.services.sessions import end_active_session_in_room
+
+    membership = get_membership(db, room_id, user_id)
+    if membership is None:
+        raise NotAMemberError
+
+    member_count = db.scalar(
+        select(func.count()).select_from(RoomMember).where(RoomMember.room_id == room_id)
+    )
+    if membership.role == "owner" and (member_count or 0) > 1:
+        raise OwnerCannotLeaveError
+
+    # End the user's active session in this room, saved in the same commit.
+    end_active_session_in_room(db, user_id, room_id)
+
+    if membership.role == "owner":
+        db.delete(db.get(Room, room_id))  # last member: remove the empty room
+    else:
+        db.delete(membership)
+    db.commit()
