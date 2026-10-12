@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     trust_proxy_headers: bool = False
     session_heartbeat_grace_seconds: int = 90
+    app_timezone: str = "Asia/Kolkata"
 
     model_config = SettingsConfigDict(
         env_file=".env",

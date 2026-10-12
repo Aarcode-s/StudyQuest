@@ -6,6 +6,9 @@ from app.dependencies.db import DbSession
 from app.schemas.room import JoinRequest, RoomCreate, RoomDetail, RoomRead
 from app.services import rooms as room_service
 
+from app.schemas.status import RoomStatus
+from app.services import status as status_service
+
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
 
@@ -23,7 +26,9 @@ def join_room(request: Request, data: JoinRequest, user: CurrentUser, db: DbSess
     except room_service.InvalidInviteCodeError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Invalid invite code")
     except room_service.AlreadyMemberError:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="Already a member of this room")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail="Already a member of this room"
+        )
 
 
 @router.get("", response_model=list[RoomRead])
@@ -50,3 +55,10 @@ def leave_room(room_id: int, user: CurrentUser, db: DbSession):
             status.HTTP_409_CONFLICT,
             detail="Owner cannot leave while other members remain",
         )
+
+@router.get("/{room_id}/status", response_model=RoomStatus)
+def room_status(room_id: int, user: CurrentUser, db: DbSession):
+    try:
+        return status_service.get_room_status(db, room_id, user.id)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
