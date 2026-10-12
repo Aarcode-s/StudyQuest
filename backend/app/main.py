@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.rate_limit import limiter
-from app.routers import auth, health
+from app.routers import auth, health , rooms
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 
@@ -22,3 +22,4 @@ app.add_middleware(
 prefix = "/api/v1"
 app.include_router(health.router, prefix=prefix)
 app.include_router(auth.router, prefix=prefix)
+app.include_router(rooms.router, prefix=prefix)
