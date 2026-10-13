@@ -63,14 +63,23 @@ export default function TimerCard({ roomId }: { roomId: string }) {
 
       <div className="timer__actions">
         {session === null ? (
-          <button
-            type="button"
-            className="btn-primary timer__start"
-            disabled={t.busy || t.loading}
-            onClick={() => t.start(roomId)}
-          >
-            {t.busy ? "Starting…" : "Start focusing"}
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn-primary timer__start"
+              disabled={t.busy || t.loading}
+              onClick={() => t.start(roomId)}
+            >
+              {t.busy ? "Starting…" : "Start focusing"}
+            </button>
+            <Link
+              to={`/rooms/${roomId}/dock`}
+              className="timer__dock"
+              aria-label="Open dock mode"
+            >
+              <DockIcon />
+            </Link>
+          </>
         ) : (
           <>
             {here &&
@@ -101,9 +110,36 @@ export default function TimerCard({ roomId }: { roomId: string }) {
             >
               {elsewhere ? "Finish that timer" : "Finish"}
             </button>
+            {here && (
+              <Link
+                to={`/rooms/${roomId}/dock`}
+                className="timer__dock"
+                aria-label="Open dock mode"
+              >
+                <DockIcon />
+              </Link>
+            )}
           </>
         )}
       </div>
     </section>
+  );
+}
+
+function DockIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#0E0B1A"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </svg>
   );
 }

@@ -248,3 +248,14 @@
   background: var(--surface-raised);
   color: var(--text);
 }
+
+.timer__dock {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
