@@ -7,7 +7,7 @@ GOOD_KEY = "k3Jf9xQ2mZ8vB1nL7pR4tY6uW0cA5dEhGsX-iOqMzTb"
 
 
 def make(**overrides) -> Settings:
-    values = dict(
+    values = dict(  # noqa: C408
         _env_file=None,
         database_url="postgresql+psycopg://u:p@host/db",
         secret_key=GOOD_KEY,
