@@ -473,14 +473,14 @@ Plan: **Neon** (database) + **Render** (backend) + **Vercel** (frontend).
    included `render.yaml`). Root directory `backend`. Environment variables (set
    in Render's dashboard, never in Git):
    `APP_ENV=production`, `SECRET_KEY` (a new strong key), `DATABASE_URL`,
-   `CORS_ORIGINS` (the exact Vercel URL, `https://...`),
+   `CORS_ORIGINS` (the exact Vercel URL, `https://study-quest-lemon-alpha.vercel.app`),
    `TRUST_PROXY_HEADERS=true`, `TRUSTED_PROXY_HOPS=1`, `PYTHON_VERSION=3.13.5`.
    (`TRUSTED_PROXY_HOPS` is how many proxies sit in front of the app; it decides
    which entry of `X-Forwarded-For` is the real visitor address for rate
    limiting. Verify it after deploying: see the README section in the deploy notes.)
    The start command runs `alembic upgrade head` before starting the server.
 3. **Frontend on Vercel.** Import the repo, set the root directory to `frontend`,
-   and set `VITE_API_URL` to `https://<your-render-service>.onrender.com/api/v1`.
+   and set `VITE_API_URL` to `https://studyquest-i0x2.onrender.com`.
    `frontend/vercel.json` makes every path load `index.html`, so reloading
    `/rooms/8` works.
 4. **Connect them.** Put the final Vercel URL into Render's `CORS_ORIGINS`.
