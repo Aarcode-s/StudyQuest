@@ -1,0 +1,145 @@
+.auth {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 56px;
+}
+
+.auth__blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.auth__blob--violet {
+  top: -90px;
+  right: -90px;
+  width: 260px;
+  height: 260px;
+  background: var(--violet);
+  opacity: 0.22;
+}
+.auth__blob--cyan {
+  bottom: -110px;
+  left: -80px;
+  width: 240px;
+  height: 240px;
+  background: var(--cyan);
+  opacity: 0.14;
+}
+
+.auth__brand,
+.auth__tabs,
+.auth__form,
+.auth__note {
+  position: relative;
+}
+
+.auth__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.auth__logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth__name {
+  margin: 0;
+  font-size: 38px;
+  letter-spacing: -1px;
+}
+.auth__tagline {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.auth__tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 4px;
+}
+.auth__tab {
+  flex: 1;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-soft);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.auth__tab[aria-selected="true"] {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.field input {
+  height: 52px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--surface-raised);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 16px;
+  font-size: 16px; /* 16px stops iOS/Android zoom-on-focus */
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--violet);
+}
+
+.error-box {
+  font-size: 14px;
+  color: var(--error-text);
+  background: var(--error-bg);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.btn-primary {
+  height: 56px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--gradient);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  cursor: pointer;
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth__note {
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

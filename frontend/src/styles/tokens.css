@@ -1,0 +1,31 @@
+:root {
+  --bg: #0e0b1a;
+  --bg-dock: #05030c;
+  --surface: #1a1530;
+  --surface-deep: #120e24;
+  --surface-raised: #2b2250;
+  --border-dashed: #3a2f66;
+
+  --text: #f4f1ff;
+  --text-soft: #b9b1d6;
+  --text-muted: #8f86b3;
+
+  --violet: #8b5cf6;
+  --pink: #f472b6;
+  --cyan: #22d3ee;
+  --lime: #a3e635;
+  --amber: #fbbf24;
+  --lavender: #c4b5fd;
+
+  --error-text: #fca5a5;
+  --error-bg: #3b1424;
+
+  --gradient: linear-gradient(90deg, #8b5cf6, #f472b6);
+
+  --font-display: "Sora", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 26px;
+}
