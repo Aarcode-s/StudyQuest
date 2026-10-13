@@ -1,16 +1,29 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
-from app.core.rate_limit import limiter
-from app.routers import auth, health , rooms , sessions
+from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from app.routers import auth, health, rooms, sessions
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+DESCRIPTION = """
+StudyQuest API: group study accountability with focus timers.
+
+**Important:** all focus times are *recorded timer time*, measured by the server
+from the actions a user sent (start, pause, resume, heartbeat, finish).
+They are **not verified productivity**. The server cannot know what someone
+was actually doing while their timer ran.
+
+- Clients never send durations or timestamps; the server uses its own UTC clock.
+- If heartbeats stop, the server stops counting after a short grace period.
+- "Today" means the current day in India time (Asia/Kolkata).
+- Room data is visible only to room members; non-members receive 404.
+"""
+
+app = FastAPI(title=settings.app_name, version="0.1.0", description=DESCRIPTION)
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
