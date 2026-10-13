@@ -37,3 +37,10 @@ app.include_router(health.router, prefix=prefix)
 app.include_router(auth.router, prefix=prefix)
 app.include_router(rooms.router, prefix=prefix)
 app.include_router(sessions.router, prefix=prefix)
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz() -> dict[str, str]:
+    """Liveness check for the hosting platform. Never touches the database,
+    so frequent pings cannot keep the database awake."""
+    return {"status": "ok"}

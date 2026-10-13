@@ -1,55 +1,52 @@
-# StudyQuest
+# StudyQuest frontend
 
-A mobile-first PWA for group study accountability. Friends join rooms, run focus
-sessions, and see who is focusing and for how long.
+Mobile-first installable PWA for group study accountability. Friends join
+rooms with invite codes, run server-timed focus sessions, and see who is
+Focusing, On break or Idle, with elapsed time and today's total.
 
-> **Note:** focus times are *recorded timer time*, not verified productivity.
-> The server cannot know what someone is doing while their timer runs.
+> Recorded time is timer time. It shows when a timer ran, not what anyone
+> was doing. It is not verified productivity.
 
-## Status
-
-**Implemented (backend v1)**
-- Accounts: register, login (Argon2 hashing, short-lived JWT access tokens)
-- Rooms with invite codes; join, list, detail, leave
-- Focus sessions: start, pause, resume, heartbeat, finish, timed only by the server
-- Live room status (Focusing / On break / Idle) and today's totals (India time)
-- Rate limiting on sensitive endpoints, CORS limited to the frontend origin
-- Automated tests (pytest) against a separate Postgres database
-
-**Planned**
-- Frontend (React + TypeScript + Vite PWA, dock-mode clock screen)
-- Deployment
-- v2: WebSockets, daily/weekly stats
-- v3: XP, streaks, leaderboards
-- Refresh tokens, ownership transfer, invite code rotation, per-user timezones
-
-## Tech
-
-Python, FastAPI, SQLAlchemy 2.0 (sync), Pydantic v2, Alembic, PostgreSQL (Neon),
-pytest.
+React + TypeScript + Vite, React Router, vite-plugin-pwa. It talks only to the
+StudyQuest API (see `../backend`). The server's UTC timestamps are the source
+of truth; the client only displays them.
 
 ## Run locally
 
-Requires [uv](https://docs.astral.sh/uv/) and a PostgreSQL database.
+Requires Node 20+ and the backend running on http://127.0.0.1:8000.
 
-    cd backend
-    copy .env.example .env      # then fill in the values
-    uv sync
-    uv run python -m alembic upgrade head
-    uv run python -m uvicorn app.main:app --reload
+    npm install
+    cp .env.example .env      # Windows: copy .env.example .env
+    npm run dev               # http://localhost:5173 (CORS allows only this origin)
 
-API docs: http://127.0.0.1:8000/docs
+`VITE_API_URL` is the only setting (default `http://127.0.0.1:8000/api/v1`).
 
-## Tests
+To test the PWA build: `npm run build && npm run preview`.
 
-Tests need a separate database (its name must contain `test`) set as
-`TEST_DATABASE_URL` in `backend/.env`. Tables are wiped before every test.
+## Implemented
 
-    uv run python -m pytest -v
+- Register and log in (JWT, 30 minutes, no refresh token)
+- Create, join and leave rooms; copy invite codes
+- Live room status (polled every 5 s, paused while the tab is hidden)
+- Focus timer: start, pause, resume, finish, with a 30 s heartbeat
+- Timer pauses automatically when the app or tab is hidden
+- Dock mode: landscape clock with Screen Wake Lock and Fullscreen
+- PWA: web app manifest and service worker caching the app shell only
 
-## Design notes
+## Planned (not built)
 
-- Clients send actions, never durations. The server stamps every action with UTC.
-- A heartbeat every ~30s keeps a session counting; after 90s of silence it stops.
-- One active session per user, enforced by a partial unique index in Postgres.
-- Room data is visible only to members; non-members get 404.
+- Daily and weekly stats
+- XP, streaks and leaderboards
+- Other timezones (currently India, Asia/Kolkata)
+
+## Known limitations
+
+- The access token is kept in localStorage so a reload keeps you signed in.
+  Any XSS bug could read it; the token is short-lived (30 minutes).
+- Room status uses polling, not WebSockets, so changes appear within ~5 s.
+- The timer needs the server; there is no offline mode. Only the app shell is cached.
+- Wake Lock, Fullscreen and orientation lock depend on the browser.
+- Auto-pause uses the Page Visibility API. If the browser is killed outright,
+  the server's heartbeat grace period (90 s) stops the clock instead.
+- Installing on a phone needs HTTPS, so it works on the deployed site, not on a
+  plain-HTTP local network address.
