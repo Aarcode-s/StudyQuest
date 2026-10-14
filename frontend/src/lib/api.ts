@@ -1,5 +1,7 @@
-const BASE = import.meta.env.VITE_API_URL as string;
+const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+export const API_ROOT = BASE.replace(/\/api\/v1\/?$/, "");
 const TOKEN_KEY = "sq_token";
+const REQUEST_TIMEOUT_MS = 90_000;
 
 export class ApiError extends Error {
   status: number;
@@ -21,7 +23,7 @@ export const tokenStore = {
     try {
       localStorage.setItem(TOKEN_KEY, token);
     } catch {
-      /* storage blocked: user stays logged in until reload */
+      /* ignore */
     }
   },
   clear() {
@@ -41,7 +43,6 @@ export function setUnauthorizedHandler(fn: (() => void) | null) {
 function messageFromDetail(detail: unknown, status: number): string {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail) && detail.length > 0) {
-    // FastAPI/Pydantic validation errors: [{ loc: [...], msg: "..." }]
     const first = detail[0] as { loc?: unknown[]; msg?: string };
     const field = first.loc?.[first.loc.length - 1];
     const msg = first.msg ?? "Invalid input";
@@ -54,13 +55,18 @@ function messageFromDetail(detail: unknown, status: number): string {
 type Options = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
-  auth?: boolean; // attach the token (default true)
-  keepalive?: boolean; // lets a request finish while the page closes
+  auth?: boolean;
+  keepalive?: boolean;
 };
 
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
+  if (!BASE) {
+    throw new ApiError(
+      0,
+      "App is misconfigured: VITE_API_URL was not set when this site was built.",
+    );
+  }
   const { method = "GET", body, auth = true, keepalive = false } = opts;
-
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth) {
@@ -68,6 +74,8 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(`${BASE}${path}`, {
@@ -75,25 +83,28 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       keepalive,
+      signal: controller.signal,
     });
   } catch {
-    throw new ApiError(0, "Can't reach the server. Is the backend running?");
+    throw new ApiError(
+      0,
+      "Can't reach the server. If it was idle it may be waking up (up to a minute). Try again shortly.",
+    );
+  } finally {
+    clearTimeout(timer);
   }
 
   if (res.status === 204) return undefined as T;
-
   let data: unknown = null;
   try {
     data = await res.json();
   } catch {
     /* empty or non-JSON body */
   }
-
   if (!res.ok) {
     if (res.status === 401 && auth) onUnauthorized?.();
     const detail = (data as { detail?: unknown } | null)?.detail;
     throw new ApiError(res.status, messageFromDetail(detail, res.status));
   }
-
   return data as T;
 }

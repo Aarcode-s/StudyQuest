@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { ApiError } from "../lib/api";
+import { API_ROOT, ApiError } from "../lib/api";
 import "./auth.css";
 
 type Mode = "login" | "register";
@@ -15,6 +15,30 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [serverUp, setServerUp] = useState(false);
+
+  // Wake the (free, sleeping) backend as soon as this page opens.
+  useEffect(() => {
+    let cancelled = false;
+    async function ping() {
+      for (let i = 0; i < 25 && !cancelled; i++) {
+        try {
+          const r = await fetch(`${API_ROOT}/healthz`, { cache: "no-store" });
+          if (r.ok) {
+            if (!cancelled) setServerUp(true);
+            return;
+          }
+        } catch {
+          /* still waking up: try again */
+        }
+        await new Promise((res) => setTimeout(res, 4000));
+      }
+    }
+    ping();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (user) return <Navigate to="/rooms" replace />;
 
@@ -132,6 +156,13 @@ export default function LoginPage() {
             required
           />
         </div>
+
+        {!serverUp && !error && (
+          <div className="notice" role="status">
+            Waking up the server. Free hosting sleeps when idle, so this can
+            take up to a minute.
+          </div>
+        )}
 
         {error && (
           <div className="error-box" role="alert">
