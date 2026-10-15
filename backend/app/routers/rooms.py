@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from app.core.rate_limit import limiter
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.schemas.room import JoinRequest, RoomCreate, RoomDetail, RoomRead
+from app.schemas.stats import Leaderboard
 from app.schemas.status import RoomStatus
 from app.services import rooms as room_service
+from app.services import stats as stats_service
 from app.services import status as status_service
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -58,6 +62,23 @@ def get_room(room_id: int, user: CurrentUser, db: DbSession):
 def room_status(room_id: int, user: CurrentUser, db: DbSession):
     try:
         return status_service.get_room_status(db, room_id, user.id)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+
+@router.get(
+    "/{room_id}/leaderboard",
+    response_model=Leaderboard,
+    summary="Ranking of members by recorded focus time (members only)",
+)
+def room_leaderboard(
+    room_id: int,
+    user: CurrentUser,
+    db: DbSession,
+    period: Annotated[Literal["today", "week", "month"], Query()] = "today",
+):
+    try:
+        return stats_service.get_leaderboard(db, room_id, user.id, period)
     except room_service.NotAMemberError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
 

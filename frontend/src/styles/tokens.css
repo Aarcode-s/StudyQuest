@@ -1,6 +1,10 @@
-:root {
+/* Dark is the default. Light is switched on by <html data-theme="light">. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
   --bg: #0e0b1a;
-  --bg-dock: #05030c;
+  --bg-dock: #000000;
   --surface: #1a1530;
   --surface-deep: #120e24;
   --surface-raised: #2b2250;
@@ -10,17 +14,36 @@
   --text-soft: #b9b1d6;
   --text-muted: #8f86b3;
 
+  /* Fills: avatars, tiles, badges, buttons. Text on them uses --on-fill. */
   --violet: #8b5cf6;
   --pink: #f472b6;
   --cyan: #22d3ee;
   --lime: #a3e635;
   --amber: #fbbf24;
   --lavender: #c4b5fd;
+  --on-fill: #0e0b1a;
+
+  /* Text colours that must stay readable on the page background. */
+  --link: #22d3ee;
+  --warn-text: #fbbf24;
+  --owner-text: #c4b5fd;
+  --focus-ring: #c4b5fd;
+
+  --badge-bg: #1f2a3a;
+  --badge-text: #7dd3fc;
 
   --error-text: #fca5a5;
   --error-bg: #3b1424;
 
   --gradient: linear-gradient(90deg, #8b5cf6, #f472b6);
+  --on-accent: #0e0b1a;
+
+  /* Streak grid: none -> a lot */
+  --g0: #221a3f;
+  --g1: #3b2a78;
+  --g2: #5b3fb5;
+  --g3: #8b5cf6;
+  --g4: #c4b5fd;
 
   --font-display: "Sora", sans-serif;
   --font-body: "DM Sans", sans-serif;
@@ -28,4 +51,47 @@
   --radius-sm: 14px;
   --radius-md: 20px;
   --radius-lg: 26px;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fff6ec;
+  --bg-dock: #000000;
+  --surface: #fffcf7;
+  --surface-deep: #fbebdd;
+  --surface-raised: #f3e3d3;
+  --border-dashed: #e4cdb8;
+
+  --text: #2e2233;
+  --text-soft: #5c4d5a;
+  --text-muted: #6e5f6b;
+
+  --violet: #7c4dcc;
+  --pink: #f7b8cf;
+  --cyan: #a8dde0;
+  --lime: #b9e0a5;
+  --amber: #ffd6a5;
+  --lavender: #dccbf5;
+  --on-fill: #2e2233;
+
+  --link: #1f7a7a;
+  --warn-text: #a85a12;
+  --owner-text: #6a3fb5;
+  --focus-ring: #7c4dcc;
+
+  --badge-bg: #ddf0f0;
+  --badge-text: #176666;
+
+  --error-text: #b42343;
+  --error-bg: #fde3e6;
+
+  --gradient: linear-gradient(90deg, #7c4dcc, #c2457a);
+  --on-accent: #ffffff;
+
+  --g0: #f3e8dd;
+  --g1: #e3cbf5;
+  --g2: #c9a5ec;
+  --g3: #a97bdd;
+  --g4: #7c4dcc;
 }

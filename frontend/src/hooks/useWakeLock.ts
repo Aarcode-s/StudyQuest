@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 
-/** Asks the browser to keep the screen on while `active` is true. */
+/**
+ * Asks the browser to keep the screen on while `active` is true.
+ * `blocked` is true when the browser refused (for example Android Battery Saver).
+ */
 export function useWakeLock(active: boolean) {
   const supported = typeof navigator !== "undefined" && "wakeLock" in navigator;
   const [held, setHeld] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     if (!active || !supported) return;
@@ -11,7 +15,7 @@ export function useWakeLock(active: boolean) {
     let cancelled = false;
 
     async function acquire() {
-      if (lock && !lock.released) return;
+      if (cancelled || document.hidden || (lock && !lock.released)) return;
       try {
         const l = await navigator.wakeLock.request("screen");
         if (cancelled) {
@@ -20,9 +24,14 @@ export function useWakeLock(active: boolean) {
         }
         lock = l;
         setHeld(true);
-        l.addEventListener("release", () => setHeld(false));
+        setBlocked(false);
+        l.addEventListener("release", () => {
+          if (lock === l) lock = null;
+          setHeld(false);
+        });
       } catch {
         setHeld(false);
+        setBlocked(true);
       }
     }
 
@@ -37,8 +46,9 @@ export function useWakeLock(active: boolean) {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisible);
       lock?.release().catch(() => {});
+      setHeld(false);
     };
   }, [active, supported]);
 
-  return { supported, held };
+  return { supported, held, blocked };
 }

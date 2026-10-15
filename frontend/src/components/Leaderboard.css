@@ -1,0 +1,129 @@
+.lb {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lb__tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 4px;
+}
+.lb__tab {
+  flex: 1;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-soft);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.lb__tab[aria-selected="true"] {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.lb__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lb__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  border: 2px solid transparent;
+}
+.lb__row--me {
+  border-color: var(--violet);
+}
+
+.lb__rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--surface-raised);
+  color: var(--text-soft);
+}
+.lb__rank--1 {
+  background: var(--amber);
+  color: var(--on-fill);
+}
+.lb__rank--2 {
+  background: var(--lavender);
+  color: var(--on-fill);
+}
+.lb__rank--3 {
+  background: var(--pink);
+  color: var(--on-fill);
+}
+
+.lb__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--on-fill);
+}
+
+.lb__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lb__name {
+  font-weight: 700;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb__bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+.lb__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gradient);
+}
+
+.lb__time {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
+}
+.lb__since {
+  font-size: 12px;
+  color: var(--text-muted);
+}

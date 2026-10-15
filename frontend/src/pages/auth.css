@@ -46,6 +46,7 @@
   height: 64px;
   border-radius: 20px;
   background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: var(--on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +127,7 @@
   border: 0;
   border-radius: 16px;
   background: var(--gradient);
-  color: var(--bg);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 17px;

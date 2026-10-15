@@ -31,3 +31,33 @@ export function avatarColor(key: string | number): string {
   for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
   return AVATAR_COLORS[sum % AVATAR_COLORS.length];
 }
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "2026-03-18" -> { year, month (1-12), day, weekday (Mon=0 ... Sun=6) } */
+export function parseDay(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  const weekday = (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7;
+  return { year, month, day, weekday };
+}
+
+/** "2026-03-18" -> "18 Mar" */
+export function formatDayShort(iso: string): string {
+  const d = parseDay(iso);
+  return `${d.day} ${MONTHS[d.month - 1]}`;
+}
+
+/** "2026-03-18" -> "Wed 18 Mar 2026" */
+export function formatDayLong(iso: string): string {
+  const d = parseDay(iso);
+  const wd = WEEKDAYS[(d.weekday + 1) % 7];
+  return `${wd} ${d.day} ${MONTHS[d.month - 1]} ${d.year}`;
+}
+
+export function monthName(month: number): string {
+  return MONTHS[month - 1];
+}

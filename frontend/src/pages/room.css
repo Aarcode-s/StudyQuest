@@ -11,6 +11,7 @@
   gap: 12px;
 }
 .icon-btn {
+  color: var(--text);
   width: 44px;
   height: 44px;
   border-radius: var(--radius-sm);
@@ -72,7 +73,7 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  color: var(--bg);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,11 +111,11 @@
 }
 .state-badge--focusing {
   background: var(--lime);
-  color: var(--bg);
+  color: var(--on-fill);
 }
 .state-badge--on_break {
   background: var(--amber);
-  color: var(--bg);
+  color: var(--on-fill);
 }
 .member__elapsed {
   font-size: 13px;
@@ -139,7 +140,7 @@
 
 .stale {
   font-size: 13px;
-  color: var(--amber);
+  color: var(--warn-text);
 }
 
 .later {
@@ -238,11 +239,11 @@
 }
 .timer__btn--amber {
   background: var(--amber);
-  color: var(--bg);
+  color: var(--on-fill);
 }
 .timer__btn--lime {
   background: var(--lime);
-  color: var(--bg);
+  color: var(--on-fill);
 }
 .timer__btn--raised {
   background: var(--surface-raised);
@@ -250,6 +251,7 @@
 }
 
 .timer__dock {
+  color: var(--on-fill);
   width: 52px;
   height: 52px;
   border-radius: 16px;
@@ -258,4 +260,30 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.stats-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+.stats-link > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stats-link strong {
+  font-size: 15px;
+}
+.stats-link small {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.stats-link > span:last-child {
+  font-size: 24px;
+  color: var(--text-soft);
 }

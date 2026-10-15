@@ -46,7 +46,7 @@ export default function TimerCard({ roomId }: { roomId: string }) {
       {elsewhere && session && (
         <div className="notice">
           A timer is already running in another room.{" "}
-          <Link to={`/rooms/${session.room_id}`} style={{ color: "var(--cyan)" }}>
+          <Link to={`/rooms/${session.room_id}`} style={{ color: "var(--link)" }}>
             Go to that room
           </Link>
         </div>
@@ -70,7 +70,7 @@ export default function TimerCard({ roomId }: { roomId: string }) {
               disabled={t.busy || t.loading}
               onClick={() => t.start(roomId)}
             >
-              {t.busy ? "Starting…" : "Start focusing"}
+              {t.busy ? "Starting..." : "Start focusing"}
             </button>
             <Link
               to={`/rooms/${roomId}/dock`}
@@ -133,7 +133,7 @@ function DockIcon() {
       height="22"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#0E0B1A"
+      stroke="currentColor"
       strokeWidth="2.4"
       strokeLinecap="round"
       strokeLinejoin="round"

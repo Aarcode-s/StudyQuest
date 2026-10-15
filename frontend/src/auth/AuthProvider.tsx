@@ -1,24 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { api, setUnauthorizedHandler, tokenStore } from "../lib/api";
+import { ApiError, api, setUnauthorizedHandler, tokenStore } from "../lib/api";
 import type { TokenResponse, User } from "../lib/types";
 import { AuthContext } from "./context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   // Only "loading" if there is a saved token we must verify with the server.
   const [loading, setLoading] = useState(() => tokenStore.get() !== null);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => {
+    setUnauthorizedHandler((reason) => {
       tokenStore.clear();
       setUser(null);
+      if (reason) setNotice(reason);
     });
 
     if (tokenStore.get()) {
       api<User>("/auth/me")
         .then(setUser)
-        .catch(() => tokenStore.clear())
+        .catch((e) => {
+          // A 401 already signed the user out. Anything else (server asleep,
+          // no network) keeps the saved login so a reload can try again.
+          if (e instanceof ApiError && e.status === 401) tokenStore.clear();
+        })
         .finally(() => setLoading(false));
     }
 
@@ -32,8 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       auth: false,
     });
     tokenStore.set(t.access_token);
+    tokenStore.setRefresh(t.refresh_token);
     try {
       setUser(await api<User>("/auth/me"));
+      setNotice(null);
     } catch (e) {
       tokenStore.clear();
       throw e;
@@ -53,13 +61,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    // Tell the server too, so the saved tokens stop working everywhere.
+    api("/auth/logout", {
+      method: "POST",
+      keepalive: true,
+      silentUnauthorized: true,
+    }).catch(() => {});
     tokenStore.clear();
     setUser(null);
+    setNotice(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, notice, login, register, logout }),
+    [user, loading, notice, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

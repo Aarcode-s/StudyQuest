@@ -17,12 +17,17 @@
   margin: 2px 0 0;
   font-size: 28px;
 }
+.rooms__tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
   background: var(--cyan);
-  color: var(--bg);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,16 +53,16 @@
 .btn-gradient {
   border: 0;
   background: var(--gradient);
-  color: var(--bg);
+  color: var(--on-accent);
 }
 .btn-outline {
   border: 2px solid var(--violet);
   background: transparent;
-  color: #e9e2ff;
+  color: var(--text);
 }
 .btn-outline[aria-pressed="true"],
 .btn-gradient[aria-pressed="true"] {
-  outline: 3px solid var(--lavender);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -124,7 +129,7 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  color: var(--bg);
+  color: var(--on-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,12 +162,12 @@
   font-weight: 700;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #1f2a3a;
-  color: #7dd3fc;
+  background: var(--badge-bg);
+  color: var(--badge-text);
 }
 .badge--owner {
   background: var(--surface-raised);
-  color: var(--lavender);
+  color: var(--owner-text);
 }
 
 .room-card__code {

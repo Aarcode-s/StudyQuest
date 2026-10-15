@@ -1,0 +1,114 @@
+.streak {
+  --cell: 13px;
+  --gap: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.streak__frame {
+  display: flex;
+  gap: 8px;
+}
+
+.streak__rows {
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+  padding-top: calc(14px + var(--gap));
+  font-size: 10px;
+  line-height: var(--cell);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.streak__scroller {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.streak__months {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--cell);
+  gap: var(--gap);
+  height: 14px;
+  margin-bottom: var(--gap);
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--text-muted);
+}
+.streak__months span {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.streak__grid {
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  grid-auto-flow: column;
+  grid-auto-columns: var(--cell);
+  gap: var(--gap);
+  width: max-content;
+}
+
+.streak__cell {
+  display: block;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+}
+.streak__pad {
+  display: block;
+  width: var(--cell);
+  height: var(--cell);
+}
+.streak__cell--0 {
+  background: var(--g0);
+}
+.streak__cell--1 {
+  background: var(--g1);
+}
+.streak__cell--2 {
+  background: var(--g2);
+}
+.streak__cell--3 {
+  background: var(--g3);
+}
+.streak__cell--4 {
+  background: var(--g4);
+}
+.streak__cell--today {
+  outline: 2px solid var(--text-soft);
+  outline-offset: 1px;
+}
+.streak__cell--picked {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.streak__caption {
+  font-size: 13px;
+  color: var(--text-soft);
+  min-height: 18px;
+}
+
+.streak__legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.streak__legend .streak__cell {
+  width: 11px;
+  height: 11px;
+}
+.streak__legend span:first-child {
+  margin-right: 4px;
+}
+.streak__legend span:last-child {
+  margin-left: 4px;
+}

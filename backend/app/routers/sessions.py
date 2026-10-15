@@ -1,10 +1,14 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
 from app.core.rate_limit import limiter
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.schemas.session import SessionRead
+from app.schemas.stats import DailyStats
 from app.services import sessions as svc
+from app.services import stats as stats_service
 from app.services.rooms import NotAMemberError
 
 router = APIRouter(tags=["sessions"])
@@ -86,3 +90,17 @@ def heartbeat(request: Request, session_id: int, user: CurrentUser, db: DbSessio
 )
 def finish(session_id: int, user: CurrentUser, db: DbSession):
     return _transition(svc.finish_session, db, user, session_id)
+
+
+@router.get(
+    "/stats/daily",
+    response_model=DailyStats,
+    tags=["stats"],
+    summary="Your focus time per day (India time) plus streaks",
+)
+def daily_stats(
+    user: CurrentUser,
+    db: DbSession,
+    days: Annotated[int, Query(ge=7, le=400)] = 365,
+):
+    return stats_service.get_daily_stats(db, user.id, days)

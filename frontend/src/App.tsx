@@ -4,6 +4,7 @@ import DockPage from "./pages/DockPage";
 import LoginPage from "./pages/LoginPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
 import RoomsPage from "./pages/RoomsPage";
+import StatsPage from "./pages/StatsPage";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/rooms" element={<RoomsPage />} />
         <Route path="/rooms/:roomId" element={<RoomDetailPage />} />
         <Route path="/rooms/:roomId/dock" element={<DockPage />} />
+        <Route path="/stats" element={<StatsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/rooms" replace />} />
     </Routes>

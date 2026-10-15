@@ -5,6 +5,7 @@ import { ApiError, api } from "../lib/api";
 import { avatarColor, formatClock, formatTotal } from "../lib/format";
 import type { MemberState, MemberStatus, Room } from "../lib/types";
 import "./room.css";
+import Leaderboard from "../components/Leaderboard";
 import TimerCard from "../components/TimerCard";
 
 const POLL_MS = 5000;
@@ -155,7 +156,7 @@ export default function RoomDetailPage() {
             height="20"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#E9E2FF"
+            stroke="currentColor"
             strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -180,12 +181,12 @@ export default function RoomDetailPage() {
 
         {stale && (
           <div className="stale" role="status">
-            Connection problem. Retrying…
+            Connection problem. Retrying...
           </div>
         )}
 
         {sorted === null ? (
-          <div className="notice">Loading…</div>
+          <div className="notice">Loading...</div>
         ) : (
           <ul className="members">
             {sorted.map((m) => {
@@ -227,10 +228,15 @@ export default function RoomDetailPage() {
         )}
       </section>
 
-      <div className="later">
-        <strong>Leaderboard and streaks</strong>
-        <span>Coming later. Space kept for it.</span>
-      </div>
+      <Leaderboard roomId={roomId ?? ""} />
+
+      <Link to="/stats" className="stats-link">
+        <span>
+          <strong>Your streak and daily grid</strong>
+          <small>See how many days in a row you have focused</small>
+        </span>
+        <span aria-hidden="true">&rsaquo;</span>
+      </Link>
 
       <p className="footnote">
         Times are recorded timer time. They show when a timer ran, not
@@ -248,7 +254,7 @@ export default function RoomDetailPage() {
         onClick={leave}
         disabled={leaving}
       >
-        {leaving ? "Leaving…" : "Leave room"}
+        {leaving ? "Leaving..." : "Leave room"}
       </button>
     </main>
   );

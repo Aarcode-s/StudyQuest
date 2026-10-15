@@ -1,11 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../lib/api";
 import { formatClock } from "../lib/format";
-import type { Room } from "../lib/types";
+import { applyTheme, getThemePref, setBrowserThemeColor } from "../lib/theme";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useSession } from "../session/useSession";
 import "./dock.css";
+
+const CONTROLS_MS = 6000; // how long the controls stay after a tap
+const SHIFT_MS = 60_000; // nudge the clock slightly now and then (OLED burn-in)
+const SHIFTS = [
+  [0, 0],
+  [8, -6],
+  [-8, 6],
+  [6, 8],
+  [-6, -8],
+];
 
 export default function DockPage() {
   const { roomId = "" } = useParams();
@@ -13,21 +22,16 @@ export default function DockPage() {
   const t = useSession();
   const wake = useWakeLock(true);
 
-  const [room, setRoom] = useState<Room | null>(null);
+  const [controls, setControls] = useState(false);
   const [isFs, setIsFs] = useState(() => !!document.fullscreenElement);
+  const [shift, setShift] = useState(0);
+  const hideTimer = useRef<number | undefined>(undefined);
 
-  // Room name is cosmetic, so a failure here is ignored.
+  // Black status bar while docked; restore the theme colour on the way out.
   useEffect(() => {
-    let cancelled = false;
-    api<Room>(`/rooms/${roomId}`)
-      .then((r) => {
-        if (!cancelled) setRoom(r);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [roomId]);
+    setBrowserThemeColor("#000000");
+    return () => applyTheme(getThemePref());
+  }, []);
 
   useEffect(() => {
     const onChange = () => setIsFs(!!document.fullscreenElement);
@@ -37,6 +41,22 @@ export default function DockPage() {
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     };
   }, []);
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setShift((s) => (s + 1) % SHIFTS.length),
+      SHIFT_MS,
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(hideTimer.current), []);
+
+  function reveal() {
+    setControls(true);
+    window.clearTimeout(hideTimer.current);
+    hideTimer.current = window.setTimeout(() => setControls(false), CONTROLS_MS);
+  }
 
   async function enterFullscreen() {
     try {
@@ -60,141 +80,125 @@ export default function DockPage() {
   const { session } = t;
   const here = session !== null && String(session.room_id) === roomId;
   const elsewhere = session !== null && !here;
-  const label = here ? (t.running ? "Focusing" : "Paused") : "Ready";
+  const message = t.error ?? t.notice;
+  // Controls are always visible when there is nothing to watch yet, or when
+  // something needs attention. Otherwise the screen is only the clock.
+  const showPanel = controls || !here || message !== null;
+
   const wakeNote = !wake.supported
     ? "This browser can't keep the screen awake."
     : wake.held
       ? "Screen stays awake. Recorded timer time."
-      : "Asking the browser to keep the screen awake…";
+      : wake.blocked
+        ? "The browser refused to keep the screen awake. Turn off Battery Saver."
+        : "Asking the browser to keep the screen awake...";
+
+  const digitsClass = [
+    "dock__digits",
+    t.seconds >= 3600 ? "dock__digits--long" : "",
+    !here ? "dock__digits--idle" : t.running ? "" : "dock__digits--paused",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const [dx, dy] = SHIFTS[shift];
 
   return (
-    <main className="dock">
-      <div className="dock__top">
-        <div className="dock__who">
-          <span
-            className={`state-badge ${
-              here ? (t.running ? "state-badge--focusing" : "state-badge--on_break") : ""
-            }`}
-          >
-            {label}
-          </span>
-          <span className="dock__room">{room?.name ?? ""}</span>
-        </div>
-        <div className="dock__tools">
-          {document.fullscreenEnabled && !isFs && (
-            <button
-              type="button"
-              className="icon-btn"
-              aria-label="Go fullscreen"
-              onClick={enterFullscreen}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#E9E2FF"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-              </svg>
-            </button>
-          )}
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Exit dock mode"
-            onClick={exit}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#E9E2FF"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <div
-          className={
-            t.seconds >= 3600 ? "dock__digits dock__digits--long" : "dock__digits"
-          }
-        >
+    <main
+      className="dock"
+      data-theme="dark"
+      tabIndex={0}
+      onClick={reveal}
+      onKeyDown={reveal}
+    >
+      <div
+        className="dock__clock"
+        style={{ transform: `translate(${dx}px, ${dy}px)` }}
+      >
+        <div className={digitsClass} aria-live="off">
           {here ? formatClock(t.seconds) : "0:00"}
         </div>
-        {elsewhere && session && (
-          <div className="dock__msg">
-            A timer is running in another room.{" "}
-            <Link to={`/rooms/${session.room_id}/dock`} style={{ color: "var(--cyan)" }}>
-              Open it
-            </Link>
-          </div>
-        )}
-        {(t.error || t.notice) && (
-          <div className="dock__msg" role={t.error ? "alert" : "status"}>
-            {t.error ?? t.notice}
-          </div>
-        )}
-        <div className="dock__rotate">Rotate your phone to landscape.</div>
       </div>
 
-      <div className="dock__bottom">
-        <div className="dock__note">{wakeNote}</div>
-        <div className="dock__actions">
-          {session === null ? (
-            <button
-              type="button"
-              className="btn-primary"
-              disabled={t.busy || t.loading}
-              onClick={() => t.start(roomId)}
-            >
-              Start focusing
-            </button>
-          ) : (
-            <>
-              {here &&
-                (t.running ? (
-                  <button
-                    type="button"
-                    className="timer__btn timer__btn--amber"
-                    disabled={t.busy}
-                    onClick={t.pause}
-                  >
-                    Pause
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="timer__btn timer__btn--lime"
-                    disabled={t.busy}
-                    onClick={t.resume}
-                  >
-                    Resume
-                  </button>
-                ))}
+      {showPanel && (
+        <div className="dock__panel">
+          {elsewhere && session && (
+            <div className="dock__msg">
+              A timer is running in another room.{" "}
+              <Link to={`/rooms/${session.room_id}/dock`}>Open it</Link>
+            </div>
+          )}
+          {message && (
+            <div className="dock__msg" role={t.error ? "alert" : "status"}>
+              {message}
+            </div>
+          )}
+
+          <div className="dock__actions">
+            {session === null ? (
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={t.busy || t.loading}
+                onClick={() => t.start(roomId)}
+              >
+                Start focusing
+              </button>
+            ) : (
+              <>
+                {here &&
+                  (t.running ? (
+                    <button
+                      type="button"
+                      className="timer__btn timer__btn--amber"
+                      disabled={t.busy}
+                      onClick={t.pause}
+                    >
+                      Pause
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="timer__btn timer__btn--lime"
+                      disabled={t.busy}
+                      onClick={t.resume}
+                    >
+                      Resume
+                    </button>
+                  ))}
+                <button
+                  type="button"
+                  className="timer__btn timer__btn--raised"
+                  disabled={t.busy}
+                  onClick={t.finish}
+                >
+                  Finish
+                </button>
+              </>
+            )}
+            {document.fullscreenEnabled && !isFs && (
               <button
                 type="button"
                 className="timer__btn timer__btn--raised"
-                disabled={t.busy}
-                onClick={t.finish}
+                onClick={enterFullscreen}
               >
-                Finish
+                Fullscreen
               </button>
-            </>
-          )}
+            )}
+            <button
+              type="button"
+              className="timer__btn timer__btn--raised"
+              onClick={exit}
+            >
+              Exit
+            </button>
+          </div>
+
+          <div className="dock__note">
+            {wakeNote} Tap the screen to show or hide these controls.
+          </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }

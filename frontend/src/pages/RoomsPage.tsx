@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import ThemeToggle from "../components/ThemeToggle";
 import { ApiError, api } from "../lib/api";
 import type { Room } from "../lib/types";
 import "./rooms.css";
@@ -122,10 +123,21 @@ export default function RoomsPage() {
           <div className="rooms__welcome">Welcome back</div>
           <h1 className="title rooms__title">Your rooms</h1>
         </div>
-        <div className="avatar" aria-hidden="true">
-          {user?.username.charAt(0).toUpperCase()}
+        <div className="rooms__tools">
+          <ThemeToggle />
+          <Link to="/stats" className="avatar" aria-label="Your streak and stats">
+            {user?.username.charAt(0).toUpperCase()}
+          </Link>
         </div>
       </header>
+
+      <Link to="/stats" className="stats-link">
+        <span>
+          <strong>Your streak and daily grid</strong>
+          <small>See how many days in a row you have focused</small>
+        </span>
+        <span aria-hidden="true">&rsaquo;</span>
+      </Link>
 
       <div className="rooms__actions">
         <button
@@ -161,7 +173,7 @@ export default function RoomsPage() {
               autoComplete="off"
             />
             <button className="btn-primary" type="submit" disabled={busy}>
-              {busy ? "…" : panel === "create" ? "Create" : "Join"}
+              {busy ? "..." : panel === "create" ? "Create" : "Join"}
             </button>
           </div>
           {formError && (
@@ -175,7 +187,7 @@ export default function RoomsPage() {
       {notice && <div className="notice">{notice}</div>}
 
       {loading ? (
-        <div className="notice">Loading rooms…</div>
+        <div className="notice">Loading rooms...</div>
       ) : loadError ? (
         <div className="panel">
           <div className="error-box" role="alert">

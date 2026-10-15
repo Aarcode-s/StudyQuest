@@ -8,7 +8,7 @@ import "./auth.css";
 type Mode = "login" | "register";
 
 export default function LoginPage() {
-  const { user, login, register } = useAuth();
+  const { user, login, register, notice } = useAuth();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -77,7 +77,7 @@ export default function LoginPage() {
             height="34"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#0E0B1A"
+            stroke="currentColor"
             strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -157,6 +157,12 @@ export default function LoginPage() {
           />
         </div>
 
+        {notice && !error && (
+          <div className="notice" role="status">
+            {notice}
+          </div>
+        )}
+
         {!serverUp && !error && (
           <div className="notice" role="status">
             Waking up the server. Free hosting sleeps when idle, so this can
@@ -171,7 +177,7 @@ export default function LoginPage() {
         )}
 
         <button className="btn-primary" type="submit" disabled={busy}>
-          {busy ? "Please wait…" : isLogin ? "Log in" : "Create account"}
+          {busy ? "Please wait..." : isLogin ? "Log in" : "Create account"}
         </button>
       </form>
 

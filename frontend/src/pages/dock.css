@@ -1,65 +1,31 @@
+/* Dock mode: a black screen with only the clock. Black pixels are off on OLED
+   screens, so this uses the least power. No animation, no glow. */
 .dock {
+  --digits: #cfcfcf;
+  --digits-paused: #b3862b;
+  --digits-idle: #7d7d7d;
+
   position: fixed;
   inset: 0;
   background: var(--bg-dock);
   color: var(--text);
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: max(20px, env(safe-area-inset-top))
-    max(28px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom))
-    max(28px, env(safe-area-inset-left));
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-}
-.dock::before {
-  content: "";
-  position: absolute;
-  right: -120px;
-  top: -120px;
-  width: 360px;
-  height: 360px;
-  border-radius: 50%;
-  background: var(--violet);
-  opacity: 0.16;
-  pointer-events: none;
-}
-.dock > * {
-  position: relative;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.dock__top,
-.dock__bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.dock__clock {
+  padding: 0 24px;
 }
-.dock__who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.dock__room {
-  font-size: 15px;
-  color: var(--text-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dock__tools {
-  display: flex;
-  gap: 10px;
-}
-.dock .icon-btn {
-  border: 0;
-  cursor: pointer;
-}
-
 .dock__digits {
   text-align: center;
+  color: var(--digits);
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(72px, min(24vw, 44vh), 220px);
   line-height: 1;
   letter-spacing: -0.03em;
@@ -68,36 +34,50 @@
 .dock__digits--long {
   font-size: clamp(56px, min(16vw, 38vh), 190px);
 }
+.dock__digits--paused {
+  color: var(--digits-paused);
+}
+.dock__digits--idle {
+  color: var(--digits-idle);
+}
 
-.dock__note {
-  font-size: 13px;
-  color: var(--text-muted);
+.dock__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px max(20px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: #0b0b0b;
+  border-top: 1px solid #222;
 }
 .dock__actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 .dock__actions .timer__btn,
 .dock__actions .btn-primary {
   flex: none;
   height: 48px;
-  padding: 0 28px;
+  padding: 0 24px;
 }
-
 .dock__msg {
   text-align: center;
   font-size: 14px;
   color: var(--text-soft);
 }
-
-.dock__rotate {
-  display: none;
-  text-align: center;
-  font-size: 13px;
-  color: var(--amber);
+.dock__msg a {
+  color: var(--link);
 }
-@media (orientation: portrait) {
-  .dock__rotate {
-    display: block;
-  }
+.dock__note {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
 }
