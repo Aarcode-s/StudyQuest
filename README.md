@@ -17,7 +17,8 @@ built a full-stack app, read it top to bottom.
 
 You can try it here 
 https://study-quest-lemon-alpha.vercel.app/login
-<img width="990" height="1528" alt="image" src="https://github.com/user-attachments/assets/18a7e108-ac45-4a47-b62e-08e88071870b" />
+
+<img width="300" height="500" alt="image" src="https://github.com/user-attachments/assets/18a7e108-ac45-4a47-b62e-08e88071870b" />
 
 
 
