@@ -19,6 +19,14 @@ You can try it here
 https://study-quest-lemon-alpha.vercel.app/login
 
 <img width="300" height="500" alt="image" src="https://github.com/user-attachments/assets/18a7e108-ac45-4a47-b62e-08e88071870b" />
+<img width="300" height="500" alt="image" src="https://github.com/user-attachments/assets/6e0d5a96-12ee-40b2-a8e7-317cc3105c6f" />
+<img width="1040" height="894" alt="image" src="https://github.com/user-attachments/assets/5a34bbfb-47be-432f-9c90-ccc0bccef153" />
+<img width="1176" height="962" alt="image" src="https://github.com/user-attachments/assets/d6d7a28a-86bf-4417-9a7e-516c261560db" />
+<img width="1000" height="900" alt="image" src="https://github.com/user-attachments/assets/48339ecf-b6ec-47ed-811f-423879d98e6e" />
+
+
+
+
 
 
 
