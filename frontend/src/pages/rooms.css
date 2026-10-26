@@ -222,3 +222,64 @@
   padding: 12px;
   cursor: pointer;
 }
+
+.link-button--quiet {
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: -12px;
+}
+
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 2px solid var(--error-text);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.danger strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.danger p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+.danger input {
+  height: 52px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--surface-raised);
+  background: var(--surface-deep);
+  color: var(--text);
+  padding: 0 16px;
+  font-size: 16px;
+}
+.danger input:focus {
+  outline: none;
+  border-color: var(--error-text);
+}
+.danger__row {
+  display: flex;
+  gap: 12px;
+}
+.danger__row button {
+  flex: 1;
+  height: 52px;
+  border-radius: 16px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.danger__row button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.btn-danger {
+  border: 0;
+  background: var(--error-text);
+  color: var(--on-accent);
+}

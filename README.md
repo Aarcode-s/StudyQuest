@@ -8,21 +8,6 @@ A mobile-first, installable web app (PWA) for **group study accountability**. Fr
 - Backend (live): https://studyquest-i0x2.onrender.com  (API docs at `/docs`)
 - Free-tier stack: **Neon** (Postgres) + **Render** (API) + **Vercel** (frontend)
 
-You can try it here 
-https://study-quest-lemon-alpha.vercel.app/login
-
-<img width="300" height="500" alt="image" src="https://github.com/user-attachments/assets/18a7e108-ac45-4a47-b62e-08e88071870b" />
-<img width="300" height="500" alt="image" src="https://github.com/user-attachments/assets/6e0d5a96-12ee-40b2-a8e7-317cc3105c6f" />
-<img width="1040" height="894" alt="image" src="https://github.com/user-attachments/assets/5a34bbfb-47be-432f-9c90-ccc0bccef153" />
-<img width="1176" height="962" alt="image" src="https://github.com/user-attachments/assets/d6d7a28a-86bf-4417-9a7e-516c261560db" />
-<img width="1000" height="900" alt="image" src="https://github.com/user-attachments/assets/48339ecf-b6ec-47ed-811f-423879d98e6e" />
-
-
-
-
-
-
-
 ---
 
 ## 1. What it does
@@ -31,6 +16,7 @@ https://study-quest-lemon-alpha.vercel.app/login
 |---|---|
 | Accounts | Register / log in with email + password (Argon2 hashed) |
 | One device at a time | Logging in elsewhere signs the old device out ("Signed in on another device") |
+| Delete account | Password-confirmed; owned rooms pass to the earliest-joined member (or are deleted if you were alone); history is erased |
 | Stay signed in | 30-minute access token + 30-day refresh token, renewed silently |
 | Rooms | Create, join by invite code, leave. Non-members get 404 (rooms are invisible to outsiders) |
 | Focus timer | Start / pause / resume / finish. **The server owns the clock**; the phone only sends actions |
@@ -98,6 +84,7 @@ studyquest/
 | POST | `/auth/register`, `/auth/login` | Create account / sign in (login returns access + refresh token) |
 | POST | `/auth/refresh` | Swap a refresh token for a new access token |
 | POST | `/auth/logout` | End this device's session |
+| POST | `/auth/delete-account` | Permanently delete your account (needs `password`; 403 if wrong) |
 | GET | `/auth/me` | Current user |
 | GET/POST | `/rooms`, `/rooms/join` | List / create / join |
 | GET | `/rooms/{id}`, `/rooms/{id}/status` | Room info / live member states |
@@ -200,64 +187,9 @@ uv run python -m pytest
 ## 9. Troubleshooting
 | Symptom | Cause / fix |
 |---|---|
-<<<<<<< HEAD
-| `os error 4551` / blocked `.exe` | Windows Application Control. Use `uv run python -m ...` and `npm.cmd`. |
-| `ModuleNotFoundError: psycopg2` | `DATABASE_URL` must start with `postgresql+psycopg://`. Restart the server after editing `.env`. |
-| `uv` says no `pyproject.toml` | You are in the wrong folder. Run backend commands from `backend/`. |
-| `/health` gives 404 | The path is `/api/v1/health`, with the prefix. |
-| Browser shows a CORS error | Frontend must run on exactly `http://localhost:5173`, or `CORS_ORIGINS` must list the real frontend URL. Restart the backend after changing it. |
-| Frontend: "Can't reach the server" | The backend is not running, or `VITE_API_URL` is wrong. Restart `npm run dev` after editing `.env`. |
-| Vite: `Failed to resolve import "./pages/X"` | The file name is different (`RoomPage` vs `RoomsPage`). Names are case- and letter-exact. |
-| Tests: `KeyError: 'TEST_DATABASE_URL'` | You ran pytest outside `backend/`, or the variable is missing from `.env`. |
-| Manifest: "Icon failed to load" | The four icons are not in `frontend/public/` with the exact names. Rebuild after adding them. |
-| 429 Too Many Requests | The rate limiter working as intended. Wait a minute. |
-| Timer stopped by itself | Switching tab or app pauses it by design; or the heartbeat was lost for more than 90 seconds. |
-
----
-
-## 16. Implemented vs planned
-
-**Implemented**
-- Authentication (Argon2, 30 minute JWT)
-- Rooms, invite codes, membership and roles
-- Server-timed focus sessions with heartbeat and auto-expiry
-- Live room status with today's totals
-- Rate limiting, CORS, authorization on every protected endpoint
-- 23 automated backend tests
-- Frontend: login and register, rooms, room screen, timer, dock mode
-- PWA manifest, icons and service worker (app shell only)
-- Production configuration checks (Checkpoint 10.1)
-
-**In progress**
-- Deployment to Render and Vercel (Checkpoint 10)
-
-**Planned (not built)**
-- v2: daily and weekly stats, GitHub-style focus grid
-- v3: XP, streaks, leaderboards
-- Timezones other than India
-
----
-
-## 17. Known limitations
-
-- **Recorded time is not verified productivity.** No app can know that.
-- **Token in `localStorage`:** a reload keeps you signed in, but any cross-site
-  scripting bug could read it. The token lives only 30 minutes and there is no
-  refresh token, so you log in again after it expires.
-- **Polling, not WebSockets:** changes in a room appear within about 5 seconds.
-- **Rate-limit counters are kept in memory:** they reset when the server restarts,
-  and they are per server instance.
-- **No offline mode:** only the app shell is cached.
-- **Wake Lock, Fullscreen and orientation lock** depend on the browser.
-- **If the browser is killed outright,** the server's 90 second heartbeat grace
-  stops the clock instead of the app pausing it.
-- **Free hosting:** sleeping services and monthly usage limits (see section 13).
-- **No frontend automated tests** yet.
-=======
 | "Can't reach the server" | `VITE_API_URL` missing at build time, or Render is waking up |
 | CORS error | `CORS_ORIGINS` must match the Vercel URL exactly |
 | `psycopg2` import error | `DATABASE_URL` must start with `postgresql+psycopg://` |
 | `password authentication failed` | Stale password in `.env`; copy a fresh string from Neon |
 | pytest refuses to run | No `TEST_DATABASE_URL` (intentional safety); create a test DB |
 | Logged out on phone | You signed in on another device |
->>>>>>> 7371b58 (updated dark theme and readme)

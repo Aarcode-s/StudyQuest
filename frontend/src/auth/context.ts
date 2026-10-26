@@ -13,6 +13,8 @@ export type AuthState = {
     password: string,
   ) => Promise<void>;
   logout: () => void;
+  /** Permanently deletes the account. Throws ApiError (e.g. wrong password). */
+  deleteAccount: (password: string) => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthState | null>(null);

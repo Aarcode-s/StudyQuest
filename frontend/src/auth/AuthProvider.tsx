@@ -72,9 +72,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNotice(null);
   }, []);
 
+  const deleteAccount = useCallback(async (password: string) => {
+    // Throws on a wrong password (403) and leaves the user signed in.
+    await api("/auth/delete-account", { method: "POST", body: { password } });
+    tokenStore.clear();
+    setUser(null);
+    setNotice("Your account was deleted.");
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, notice, login, register, logout }),
-    [user, loading, notice, login, register, logout],
+    () => ({ user, loading, notice, login, register, logout, deleteAccount }),
+    [user, loading, notice, login, register, logout, deleteAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

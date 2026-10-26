@@ -29,7 +29,7 @@ function errorText(e: unknown): string {
 }
 
 export default function RoomsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -39,6 +39,11 @@ export default function RoomsPage() {
   const [value, setValue] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const [deleting, setDeleting] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -103,6 +108,28 @@ export default function RoomsPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function confirmDelete(e: FormEvent) {
+    e.preventDefault();
+    if (!deletePw) {
+      setDeleteError("Enter your password to confirm.");
+      return;
+    }
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(deletePw); // success signs you out automatically
+    } catch (err) {
+      setDeleteError(errorText(err));
+      setDeleteBusy(false);
+    }
+  }
+
+  function cancelDelete() {
+    setDeleting(false);
+    setDeletePw("");
+    setDeleteError(null);
   }
 
   async function copyCode(room: Room) {
@@ -249,6 +276,51 @@ export default function RoomsPage() {
       <button type="button" className="link-button" onClick={logout}>
         Log out
       </button>
+
+      {deleting ? (
+        <form className="danger" onSubmit={confirmDelete} noValidate>
+          <strong>Delete your account?</strong>
+          <p>
+            This permanently removes your profile, your focus history and your
+            streak. Rooms you own pass to the member who joined first; if
+            you're the only member, the room is deleted. This cannot be undone.
+          </p>
+          <input
+            type="password"
+            aria-label="Your password"
+            placeholder="Your password"
+            value={deletePw}
+            onChange={(e) => setDeletePw(e.target.value)}
+            autoComplete="current-password"
+          />
+          {deleteError && (
+            <div className="error-box" role="alert">
+              {deleteError}
+            </div>
+          )}
+          <div className="danger__row">
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={cancelDelete}
+              disabled={deleteBusy}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn-danger" disabled={deleteBusy}>
+              {deleteBusy ? "Deleting..." : "Delete forever"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          type="button"
+          className="link-button link-button--quiet"
+          onClick={() => setDeleting(true)}
+        >
+          Delete account
+        </button>
+      )}
     </main>
   );
 }

@@ -1,17 +1,19 @@
 from fastapi import APIRouter, HTTPException, Request, status
 
 from app.core.rate_limit import limiter
-from app.core.security import create_access_token
+from app.core.security import create_access_token, verify_password
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.schemas.auth import (
     AccessTokenResponse,
+    DeleteAccountRequest,
     LoginRequest,
     RefreshRequest,
     TokenResponse,
 )
 from app.schemas.user import UserCreate, UserRead
 from app.services import auth_sessions
+from app.services.account import delete_account
 from app.services.auth import DuplicateUserError, authenticate_user, create_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -80,3 +82,20 @@ def logout(user: CurrentUser, db: DbSession):
 @router.get("/me", response_model=UserRead)
 def me(current_user: CurrentUser):
     return current_user
+
+
+@router.post(
+    "/delete-account",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Permanently delete your account (password required)",
+)
+@limiter.limit("5/minute")
+def delete_my_account(
+    request: Request, data: DeleteAccountRequest, user: CurrentUser, db: DbSession
+):
+    # 403, not 401: a wrong password must not sign the user out in the app.
+    if not verify_password(data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password"
+        )
+    delete_account(db, user)
