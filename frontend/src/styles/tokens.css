@@ -1,49 +1,53 @@
-/* Dark is the default. Light is switched on by <html data-theme="light">. */
+/* Dark is the default: black, grey and white with a single red accent.
+   Light is switched on by <html data-theme="light">.
+   Token NAMES (--violet, --lime ...) are kept so no component has to change;
+   in dark mode they now hold greys / white / red. Status never relies on hue
+   alone: red = live, white = paused, grey = idle. */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #0e0b1a;
+  --bg: #0a0a0a;
   --bg-dock: #000000;
-  --surface: #1a1530;
-  --surface-deep: #120e24;
-  --surface-raised: #2b2250;
-  --border-dashed: #3a2f66;
+  --surface: #161616;
+  --surface-deep: #0f0f0f;
+  --surface-raised: #262626;
+  --border-dashed: #3a3a3a;
 
-  --text: #f4f1ff;
-  --text-soft: #b9b1d6;
-  --text-muted: #8f86b3;
+  --text: #f5f5f5;
+  --text-soft: #bdbdbd;
+  --text-muted: #8f8f8f;
 
   /* Fills: avatars, tiles, badges, buttons. Text on them uses --on-fill. */
-  --violet: #8b5cf6;
-  --pink: #f472b6;
-  --cyan: #22d3ee;
-  --lime: #a3e635;
-  --amber: #fbbf24;
-  --lavender: #c4b5fd;
-  --on-fill: #0e0b1a;
+  --violet: #e5322d; /* primary accent: red */
+  --pink: #8f8f8f; /* mid grey */
+  --cyan: #d6d6d6; /* light grey */
+  --lime: #ff3b36; /* "live" red: Focusing, Start, ring while running */
+  --amber: #f5f5f5; /* white: On break, Pause, ring while paused */
+  --lavender: #bdbdbd; /* silver */
+  --on-fill: #0a0a0a;
 
   /* Text colours that must stay readable on the page background. */
-  --link: #22d3ee;
-  --warn-text: #fbbf24;
-  --owner-text: #c4b5fd;
-  --focus-ring: #c4b5fd;
+  --link: #ff6b66;
+  --warn-text: #ff8a85;
+  --owner-text: #d6d6d6;
+  --focus-ring: #f5f5f5;
 
-  --badge-bg: #1f2a3a;
-  --badge-text: #7dd3fc;
+  --badge-bg: #262626;
+  --badge-text: #d6d6d6;
 
-  --error-text: #fca5a5;
-  --error-bg: #3b1424;
+  --error-text: #ff8a85;
+  --error-bg: #2b1112;
 
-  --gradient: linear-gradient(90deg, #8b5cf6, #f472b6);
-  --on-accent: #0e0b1a;
+  --gradient: linear-gradient(90deg, #ff3b36, #f5f5f5);
+  --on-accent: #0a0a0a;
 
-  /* Streak grid: none -> a lot */
-  --g0: #221a3f;
-  --g1: #3b2a78;
-  --g2: #5b3fb5;
-  --g3: #8b5cf6;
-  --g4: #c4b5fd;
+  /* Streak grid: none -> a lot (dark grey -> deep red -> bright red) */
+  --g0: #1e1e1e;
+  --g1: #5c1a1a;
+  --g2: #9c2222;
+  --g3: #e03230;
+  --g4: #ff6b66;
 
   --font-display: "Sora", sans-serif;
   --font-body: "DM Sans", sans-serif;

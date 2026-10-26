@@ -3,7 +3,7 @@ export type ThemeResolved = "light" | "dark";
 
 const KEY = "sq_theme";
 const BROWSER_COLOR: Record<ThemeResolved, string> = {
-  dark: "#0E0B1A",
+  dark: "#0A0A0A",
   light: "#FFF6EC",
 };
 

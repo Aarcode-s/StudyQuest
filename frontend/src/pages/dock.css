@@ -2,7 +2,7 @@
    screens, so this uses the least power. No animation, no glow. */
 .dock {
   --digits: #cfcfcf;
-  --digits-paused: #b3862b;
+  --digits-paused: #e5322d;
   --digits-idle: #7d7d7d;
 
   position: fixed;
