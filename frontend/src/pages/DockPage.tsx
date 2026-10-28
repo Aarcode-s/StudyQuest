@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DotText } from "../components/Dots";
 import { RoundBtn } from "../components/ui";
-import { useFetch } from "../hooks/useFetch";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { formatClock } from "../lib/format";
 import { enterDock, exitDock } from "../lib/dock";
 import { applyTheme, getThemePref, setBrowserThemeColor } from "../lib/theme";
-import type { Room } from "../lib/types";
 import { useSession } from "../session/useSession";
 
 const CONTROLS_MS = 6000;
@@ -18,7 +16,6 @@ export default function DockPage() {
   const navigate = useNavigate();
   const t = useSession();
   useWakeLock(true);
-  const rooms = useFetch<Room[]>("/rooms");
   const [controls, setControls] = useState(false);
   const [shift, setShift] = useState(0);
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -68,8 +65,6 @@ export default function DockPage() {
     else await enterDock();
   }
 
-  const room = rooms.data?.find((r) => r.id === t.session?.room_id);
-  const state = !t.session ? "NO TIMER" : t.onBreak ? "ON BREAK" : t.running ? "FOCUSING" : "PAUSED";
   const [dx, dy] = SHIFTS[shift];
   const text = formatClock(t.seconds);
   // Doto digits are about 0.6 em wide; keep the clock inside the screen.
@@ -77,10 +72,6 @@ export default function DockPage() {
 
   return (
     <div className="dockp" onClick={tap}>
-      <div className="dk1">
-        <i className="live" style={t.running ? undefined : { background: "#3a3a3a", boxShadow: "none" }} />
-        <span className="mono">{room ? `${room.name} · ` : ""}{state}</span>
-      </div>
       <div className="dkd" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
         <DotText size={clockSize}>{text}</DotText>
       </div>
@@ -96,9 +87,7 @@ export default function DockPage() {
           <RoundBtn icon="dock" label="Fullscreen" onClick={toggleFs} />
           <RoundBtn icon="back" label="Exit dock" onClick={() => navigate("/")} />
         </div>
-      ) : (
-        <div className="dkh mono">Tap for controls</div>
-      )}
+      ) : null}
     </div>
   );
 }

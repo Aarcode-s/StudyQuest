@@ -80,6 +80,22 @@ def update_room(room_id: int, data: RoomUpdate, user: CurrentUser, db: DbSession
     return status_service.enrich_rooms(db, [room])[0]
 
 
+@router.delete(
+    "/{room_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Owner only: delete the room for everyone",
+)
+def delete_room(room_id: int, user: CurrentUser, db: DbSession):
+    try:
+        room_service.delete_room(db, room_id, user.id)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
+    except room_service.NotOwnerError:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="Only the room owner can delete the room"
+        )
+
+
 @router.get(
     "/{room_id}/status",
     response_model=RoomStatus,

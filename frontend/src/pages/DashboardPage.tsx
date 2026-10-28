@@ -130,8 +130,11 @@ function Overview({ stats }: { stats: DailyStats }) {
   const real = series
     .map((v, i) => ({ v, i }))
     .filter((p): p is { v: number; i: number } => p.v !== null);
-  const best = real.length ? real.reduce((a, b) => (b.v > a.v ? b : a)) : null;
-  const low = real.length > 1 ? real.reduce((a, b) => (b.v < a.v ? b : a)) : null;
+  // Best / lowest only mean something once there are a few active days.
+  const activeReal = real.filter((p) => p.v >= minActive);
+  const enough = activeReal.length >= 3;
+  const best = enough ? activeReal.reduce((a, b) => (b.v > a.v ? b : a)) : null;
+  const low = enough ? activeReal.reduce((a, b) => (b.v < a.v ? b : a)) : null;
 
   return (
     <>
@@ -181,9 +184,10 @@ function Overview({ stats }: { stats: DailyStats }) {
           </button>
           <div className="tiles">
             <Tile label={cmpLabel} value={cmpValue} />
-            <Tile label="BEST DAY" value={best && best.v > 0 ? bestLabel(best.i) : "—"} />
-            <Tile label="LOWEST" value={low ? bestLabel(low.i) : "—"} />
+            <Tile label="BEST DAY" value={best ? bestLabel(best.i) : "—"} />
+            <Tile label="LOWEST" value={low && low.i !== best?.i ? bestLabel(low.i) : "—"} />
           </div>
+          {!enough && <p className="mono muted c" style={{ marginTop: 14, fontSize: 9.5 }}>Best and lowest day appear after 3 active days</p>}
           <div className="mono muted c" style={{ marginTop: 14 }}>Tap the chart to go back</div>
         </>
       )}
@@ -191,10 +195,11 @@ function Overview({ stats }: { stats: DailyStats }) {
   );
 }
 
-function InsightsView() {
+function InsightsView({ activeDays }: { activeDays: number }) {
   const { data, error, loading } = useFetch<Insights>("/stats/insights");
   if (loading) return <p className="mono muted c" style={{ marginTop: 40 }}>Loading…</p>;
   if (error || !data) return <p className="errline">{error ?? "Could not load."}</p>;
+  const enough = activeDays >= 3 && data.sessions >= 3;
   if (data.sessions === 0) {
     return (
       <div className="gcard c">
@@ -203,7 +208,7 @@ function InsightsView() {
     );
   }
   const peak =
-    data.peak_hours.length === 2
+    enough && data.peak_hours.length === 2
       ? `${formatHour(data.peak_hours[0])} – ${formatHour((data.peak_hours[1] + 1) % 24)}`
       : "—";
   const you = data.breaks_per_hour;
@@ -214,7 +219,8 @@ function InsightsView() {
       <div className="gcard">
         <div className="mono muted">When you study best</div>
         <div className="dot" style={{ fontSize: 26, margin: "8px 0 18px" }}>{peak}</div>
-        <HourStrip hours={data.hours} peak={data.peak_hours} />
+        <HourStrip hours={data.hours} peak={enough ? data.peak_hours : []} />
+        {!enough && <p className="mono muted" style={{ marginTop: 14, fontSize: 9.5 }}>Shows after 3 days of focus</p>}
       </div>
       <div className="tiles2">
         <div className="tile"><span className="mono muted">AVG SESSION</span><span className="dot">{formatTotal(data.avg_session_seconds)}</span></div>
@@ -242,7 +248,7 @@ function InsightsView() {
       </div>
       <div className="tiles2">
         <div className="tile"><span className="mono muted">LEFT THE APP</span><span className="dot">{data.left_app_count}×</span></div>
-        <div className="tile"><span className="mono muted">BEST DAY</span><span className="dot">{data.best_weekday === null ? "—" : WEEKDAY_SHORT[data.best_weekday]}</span></div>
+        <div className="tile"><span className="mono muted">BEST DAY</span><span className="dot">{!enough || data.best_weekday === null ? "—" : WEEKDAY_SHORT[data.best_weekday]}</span></div>
         <div className="tile"><span className="mono muted">FOCUS : BREAK</span><span className="dot">{data.focus_break_ratio === null ? "—" : `${data.focus_break_ratio}:1`}</span></div>
         <div className="tile"><span className="mono muted">AVG FOCUS</span><span className="dot">{data.avg_rating === null ? "—" : `${data.avg_rating}/5`}</span></div>
       </div>
@@ -270,7 +276,7 @@ export default function DashboardPage() {
         }
       />
       {view === "insights" ? (
-        <InsightsView />
+        <InsightsView activeDays={stats.data ? stats.data.days.filter((d) => d.seconds >= stats.data!.streak_min_seconds).length : 0} />
       ) : stats.data ? (
         <Overview stats={stats.data} />
       ) : stats.error ? (

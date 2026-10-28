@@ -36,6 +36,9 @@ export default function RoomPage() {
   const [minDraft, setMinDraft] = useState(10);
   const [weeklyDraft, setWeeklyDraft] = useState<number | null>(null);
   const [customDraft, setCustomDraft] = useState(false);
+  const [askLeave, setAskLeave] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
+  const [picked, setPicked] = useState<MemberStatus | null>(null);
 
   const room = useFetch<Room>(`/rooms/${roomId}`, 15_000);
   const status = useFetch<{ members: MemberStatus[] }>(`/rooms/${roomId}/status`, 5000);
@@ -86,8 +89,19 @@ export default function RoomPage() {
     navigate("/");
   }
 
+  async function deleteRoom() {
+    setLeaving(true);
+    try {
+      await api(`/rooms/${roomId}`, { method: "DELETE" });
+      navigate("/rooms");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Something went wrong.");
+      setLeaving(false);
+      setAskDelete(false);
+    }
+  }
+
   async function leave() {
-    if (!window.confirm("Leave this room? Your history stays in your own stats.")) return;
     setLeaving(true);
     try {
       await api(`/rooms/${roomId}/leave`, { method: "POST" });
@@ -98,6 +112,17 @@ export default function RoomPage() {
     }
   }
 
+  function openSettings() {
+    if (!r) return;
+    setMinDraft(r.min_daily_minutes);
+    setWeeklyDraft(r.weekly_goal_minutes);
+    setCustomDraft(![null, 600, 1200, 2400].includes(r.weekly_goal_minutes));
+    setError(null);
+    setEditing(true);
+  }
+
+  const ranked = [...members].sort((a, b) => b.today_seconds - a.today_seconds);
+  const lead = Math.max(1, ranked[0]?.today_seconds ?? 0);
   const inThisRoom = t.session?.room_id === Number(roomId);
 
   return (
@@ -107,10 +132,17 @@ export default function RoomPage() {
         back="/rooms"
         right={
           r && (
-            <button className="chip2" onClick={copy} aria-label="Copy invite code">
-              <span className="mono">{copied ? "Copied" : r.invite_code}</span>
-              <Icon name="copy" size={14} />
-            </button>
+            <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+              {r.role === "owner" && (
+                <button className="chip2" style={{ padding: 9 }} onClick={openSettings} aria-label="Room settings">
+                  <Icon name="gear" size={18} />
+                </button>
+              )}
+              <button className="chip2" onClick={copy} aria-label="Copy invite code">
+                <span className="mono">{copied ? "Copied" : r.invite_code}</span>
+                <Icon name="copy" size={14} />
+              </button>
+            </span>
           )
         }
       />
@@ -127,24 +159,10 @@ export default function RoomPage() {
       {tab === "live" && (
         <>
           {r && (
-            <div className="mono muted sec">
-              Min commitment · {r.min_daily_minutes} min / day · {showed} of {r.member_count} showed up
+            <div className="rinfo">
+              <div><span className="mono muted">MINIMUM</span><b className="dot">{r.min_daily_minutes}m / day</b></div>
+              <div><span className="mono muted">SHOWED UP</span><b className="dot">{showed} / {r.member_count}</b></div>
             </div>
-          )}
-          {r?.role === "owner" && (
-            <button
-              className="mono muted"
-              style={{ margin: "-6px 6px 14px", textDecoration: "underline" }}
-              onClick={() => {
-                setMinDraft(r.min_daily_minutes);
-                setWeeklyDraft(r.weekly_goal_minutes);
-                setCustomDraft(![null, 600, 1200, 2400].includes(r.weekly_goal_minutes));
-                setError(null);
-                setEditing(true);
-              }}
-            >
-              Change room settings
-            </button>
           )}
           {members.map((m) => (
             <div className="mr" key={m.user_id}>
@@ -173,7 +191,7 @@ export default function RoomPage() {
               You are focusing in another room · finish that session first
             </p>
           )}
-          <button className="mono muted c" style={{ margin: "26px 0 0" }} disabled={leaving} onClick={leave}>
+          <button className="mono muted c" style={{ margin: "26px 0 0" }} disabled={leaving} onClick={() => setAskLeave(true)}>
             Leave room
           </button>
         </>
@@ -181,32 +199,29 @@ export default function RoomPage() {
 
       {tab === "race" && (
         <>
-          <div className="mono muted sec">Today · race to each daily goal</div>
-          <div className="racec">
-            {members.map((m) => {
-              const p = Math.min(1, m.today_seconds / (m.daily_goal_minutes * 60));
-              const me = m.user_id === user?.id;
-              return (
-                <div className="lane" key={m.user_id}>
-                  <div className="track">
-                    <div className="rn" style={{ left: `calc(${p * 100}% - ${p * 30}px)` }}>
-                      <Figure name="run" size={30} color={me ? "var(--red)" : "var(--text)"} stroke={4} />
-                    </div>
+          <div className="mono muted sec">Today · who focused the most · tap a name</div>
+          {ranked.map((m, i) => {
+            const me = m.user_id === user?.id;
+            const w = m.hidden ? 0 : (m.today_seconds / lead) * 100;
+            return (
+              <button type="button" className="rk" key={m.user_id} onClick={() => setPicked(m)}>
+                <span className="dot rkn">{i + 1}</span>
+                <div className="rkm">
+                  <div className="rkt">
+                    <b>{m.username}{me ? " (you)" : ""}</b>
+                    <span className="mono muted">{m.hidden ? "Hidden" : formatTotal(m.today_seconds)}</span>
                   </div>
-                  <span className="mono muted nm">
-                    {m.username} · {formatTotal(m.today_seconds)} / {formatMinutes(m.daily_goal_minutes)}
-                  </span>
+                  <div className={`bar ${me ? "" : "g"}`}><u style={{ width: `${w}%` }} /></div>
                 </div>
-              );
-            })}
-            <div className="flagl mono muted">GOAL</div>
-          </div>
+              </button>
+            );
+          })}
         </>
       )}
 
-      {(tab === "week" || tab === "race") && week.data && (
+      {tab === "week" && week.data && (
         <>
-          <div className="mono muted sec" style={{ marginTop: 20 }}>Who showed up this week</div>
+          <div className="mono muted sec">Who showed up this week</div>
           <div className="mat">
             <div className="mrow">
               <span className="nm2" />
@@ -233,6 +248,41 @@ export default function RoomPage() {
           )}
         </>
       )}
+      <Sheet open={askLeave} onClose={() => setAskLeave(false)}>
+        <h2 className="dot">Leave room?</h2>
+        <p className="muted2" style={{ marginBottom: 24 }}>You will stop appearing in this room. Your focus history stays in your own stats, and you can rejoin with the invite code.</p>
+        <Pill kind="danger" disabled={leaving} onClick={leave}>Leave room</Pill>
+        <div style={{ height: 12 }} />
+        <Pill kind="ghost" onClick={() => setAskLeave(false)}>Stay</Pill>
+      </Sheet>
+      <Sheet open={!!picked} onClose={() => setPicked(null)}>
+        {picked && (() => {
+          const g = picked.daily_goal_minutes * 60;
+          const pc = Math.min(100, Math.round((picked.today_seconds / g) * 100));
+          return (
+            <>
+              <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 18 }}>
+                <div className="fa"><Figure name={picked.avatar_key} size={38} color="var(--text)" /></div>
+                <h2 className="dot" style={{ margin: 0 }}>{picked.username}</h2>
+              </div>
+              {picked.hidden ? (
+                <p className="mono muted">This member keeps their stats private.</p>
+              ) : (
+                <>
+                  <div className="mono muted">PERSONAL DAILY GOAL</div>
+                  <div style={{ margin: "14px 0" }}><DotText size={54}>{`${pc}%`}</DotText></div>
+                  <div className="bar"><u style={{ width: `${pc}%` }} /></div>
+                  <p className="mono muted" style={{ marginTop: 14 }}>
+                    {formatTotal(picked.today_seconds)} of {formatMinutes(picked.daily_goal_minutes)} today
+                  </p>
+                </>
+              )}
+              <div style={{ height: 24 }} />
+              <Pill kind="ghost" onClick={() => setPicked(null)}>Close</Pill>
+            </>
+          );
+        })()}
+      </Sheet>
       <Sheet open={editing} onClose={() => setEditing(false)}>
         <h2 className="dot">Room settings</h2>
         <div className="mono muted" style={{ marginBottom: 10 }}>Daily minimum to “show up”</div>
@@ -257,6 +307,18 @@ export default function RoomPage() {
         <ErrorLine text={error} />
         <div style={{ height: 24 }} />
         <Pill onClick={saveSettings}>Save</Pill>
+        <button type="button" className="mono muted c" style={{ margin: "22px 0 0", width: "100%", color: "var(--red)" }} onClick={() => { setEditing(false); setAskDelete(true); }}>
+          Delete room
+        </button>
+      </Sheet>
+      <Sheet open={askDelete} onClose={() => setAskDelete(false)}>
+        <h2 className="dot">Delete room?</h2>
+        <p className="muted2" style={{ marginBottom: 24 }}>
+          “{r?.name}” is removed for everyone, and all focus time recorded in it is deleted for every member too. This cannot be undone.
+        </p>
+        <Pill kind="danger" disabled={leaving} onClick={deleteRoom}>Delete for everyone</Pill>
+        <div style={{ height: 12 }} />
+        <Pill kind="ghost" onClick={() => setAskDelete(false)}>Keep room</Pill>
       </Sheet>
     </main>
   );

@@ -295,3 +295,15 @@ def test_only_owner_can_change_room_settings(client, make_user):
     assert client.patch(f"{API}/rooms/{rm['id']}", json={"min_daily_minutes": 60}, headers=bob["headers"]).status_code == 403
     assert client.patch(f"{API}/rooms/{rm['id']}", json={"min_daily_minutes": 60}, headers=eve["headers"]).status_code == 404
     assert client.get(f"{API}/rooms/{rm['id']}", headers=alice["headers"]).json()["min_daily_minutes"] == 10
+
+
+def test_only_owner_can_delete_room(client, make_user):
+    alice, bob, eve = make_user("alice"), make_user("bob"), make_user("eve")
+    rm = room(client, alice["headers"])
+    join(client, bob["headers"], rm["invite_code"])
+    assert client.delete(f"{API}/rooms/{rm['id']}", headers=bob["headers"]).status_code == 403
+    assert client.delete(f"{API}/rooms/{rm['id']}", headers=eve["headers"]).status_code == 404
+    assert client.delete(f"{API}/rooms/{rm['id']}", headers=alice["headers"]).status_code == 204
+    assert client.get(f"{API}/rooms/{rm['id']}", headers=alice["headers"]).status_code == 404
+    assert client.get(f"{API}/rooms/{rm['id']}", headers=bob["headers"]).status_code == 404
+    assert client.get(f"{API}/rooms", headers=bob["headers"]).json() == []

@@ -8,6 +8,7 @@ export type Prefs = {
   autoStartBreaks: boolean;
   sound: boolean;
   vibrate: boolean;
+  tone: string; // alarm sound id
   swap: boolean; // Pomodoro is the big clock
   lastRoomId: number | null;
   tag: string | null;
@@ -25,6 +26,7 @@ const DEFAULTS: Prefs = {
   autoStartBreaks: true,
   sound: true,
   vibrate: true,
+  tone: "beep",
   swap: false,
   lastRoomId: null,
   tag: "Study",

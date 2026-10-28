@@ -7,6 +7,7 @@ import Icon from "../components/Icon";
 import DurationInput, { clampMinutes } from "../components/DurationInput";
 import { Chip, ErrorLine, Header, Pill, Segmented, Sheet, Toggle } from "../components/ui";
 import { formatMinutes } from "../lib/format";
+import { playTone, TONES } from "../lib/beep";
 import { setPrefs, usePrefs } from "../lib/prefs";
 import { getThemePref, setThemePref } from "../lib/theme";
 import type { ThemePref } from "../lib/theme";
@@ -192,6 +193,16 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
+        {prefs.sound && (
+          <>
+            <div className="mono muted" style={{ margin: "0 6px 10px" }}>Alarm sound · tap to preview</div>
+            <div className="chs" style={{ marginBottom: 24 }}>
+              {TONES.map((x) => (
+                <Chip key={x.id} on={prefs.tone === x.id} onClick={() => { setPrefs({ tone: x.id }); playTone(x.id); }}>{x.label}</Chip>
+              ))}
+            </div>
+          </>
+        )}
         <Pill onClick={() => setPomo(false)}>Done</Pill>
       </Sheet>
     </>

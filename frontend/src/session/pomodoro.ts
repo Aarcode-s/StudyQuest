@@ -106,7 +106,7 @@ export function usePomodoro(
         const long = state.round >= prefs.rounds;
         const breakLen = (long ? prefs.longBreakMin : prefs.breakMin) * 60;
         busyRef.current = true;
-        signal(prefs.sound, prefs.vibrate);
+        signal(prefs.sound, prefs.vibrate, prefs.tone);
         update({ ...state, phase: "break", breakStartedAt: Date.now(), breakLen, long });
         pause("pomodoro").finally(() => {
           busyRef.current = false;
@@ -116,7 +116,7 @@ export function usePomodoro(
       const left = state.breakLen - (Date.now() - state.breakStartedAt) / 1000;
       if (left <= 0) {
         busyRef.current = true;
-        signal(prefs.sound, prefs.vibrate);
+        signal(prefs.sound, prefs.vibrate, prefs.tone);
         const next: Stored = {
           ...state,
           phase: "focus",

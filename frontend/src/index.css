@@ -251,3 +251,13 @@ button:disabled { opacity: 0.45; cursor: default; }
 .dkc .rb { background: #101010; border-color: #262626; color: #fff; }
 a { color: inherit; }
 .nv, .pill { text-decoration: none; }
+
+.rinfo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0 16px; }
+.rinfo > div { background: var(--card); border: 1px solid var(--line); border-radius: 26px; padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
+.rinfo .mono { font-size: 9px; }
+.rinfo .dot { font-size: 20px; font-weight: 400; }
+.rk { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 16px 20px; margin-bottom: 12px; }
+.rkn { font-size: 26px; width: 22px; text-align: center; }
+.rkm { flex: 1; min-width: 0; }
+.rkt { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.rkt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

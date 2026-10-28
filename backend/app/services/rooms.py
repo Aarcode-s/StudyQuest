@@ -154,6 +154,17 @@ def get_room_detail(db: Session, room_id: int, user_id: int) -> RoomDetail:
     )
 
 
+def delete_room(db: Session, room_id: int, user_id: int) -> None:
+    """Owner-only: delete the room, its memberships and the sessions recorded in it."""
+    membership = get_membership(db, room_id, user_id)
+    if membership is None:
+        raise NotAMemberError
+    if membership.role != "owner":
+        raise NotOwnerError
+    db.delete(db.get(Room, room_id))
+    db.commit()
+
+
 def leave_room(db: Session, room_id: int, user_id: int) -> None:
     # Imported here because sessions.py imports this module (circular import).
     from app.services.sessions import end_active_session_in_room
