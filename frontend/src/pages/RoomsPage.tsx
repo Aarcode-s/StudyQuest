@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import DurationInput, { clampMinutes } from "../components/DurationInput";
 import { ErrorLine, Chip, Field, Header, Pill, RoundBtn, Sheet } from "../components/ui";
 import { useFetch } from "../hooks/useFetch";
 import { ApiError, api } from "../lib/api";
@@ -51,6 +52,7 @@ export default function RoomsPage() {
   const [name, setName] = useState("");
   const [min, setMin] = useState(10);
   const [weekly, setWeekly] = useState<number | null>(null);
+  const [customWeekly, setCustomWeekly] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export default function RoomsPage() {
     try {
       const r = await api<Room>("/rooms", {
         method: "POST",
-        body: { name: name.trim(), min_daily_minutes: min, weekly_goal_minutes: weekly },
+        body: { name: name.trim(), min_daily_minutes: min, weekly_goal_minutes: weekly === null ? null : clampMinutes(weekly, 60, 6000) },
       });
       setCreate(false);
       setName("");
@@ -120,9 +122,15 @@ export default function RoomsPage() {
           <div className="mono muted" style={{ margin: "26px 6px 10px" }}>Room weekly goal (optional)</div>
           <div className="chs">
             {WEEKLY.map((w) => (
-              <Chip key={w.label} on={weekly === w.value} onClick={() => setWeekly(w.value)}>{w.label}</Chip>
+              <Chip key={w.label} on={!customWeekly && weekly === w.value} onClick={() => { setCustomWeekly(false); setWeekly(w.value); }}>{w.label}</Chip>
             ))}
+            <Chip on={customWeekly} onClick={() => { setCustomWeekly(true); setWeekly(weekly ?? 900); }}>Custom</Chip>
           </div>
+          {customWeekly && (
+            <div style={{ marginTop: 14 }}>
+              <DurationInput minutes={weekly ?? 900} onChange={setWeekly} />
+            </div>
+          )}
           <ErrorLine text={error} />
           <div style={{ height: 28 }} />
           <Pill type="submit" disabled={busy || !name.trim()}>Create room</Pill>

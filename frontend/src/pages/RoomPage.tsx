@@ -4,6 +4,7 @@ import { useAuth } from "../auth/useAuth";
 import { DotText } from "../components/Dots";
 import Figure from "../components/Figure";
 import Icon from "../components/Icon";
+import DurationInput, { clampMinutes } from "../components/DurationInput";
 import { Chip, ErrorLine, Header, Pill, Segmented, Sheet } from "../components/ui";
 import { useFetch } from "../hooks/useFetch";
 import { ApiError, api } from "../lib/api";
@@ -34,6 +35,7 @@ export default function RoomPage() {
   const [editing, setEditing] = useState(false);
   const [minDraft, setMinDraft] = useState(10);
   const [weeklyDraft, setWeeklyDraft] = useState<number | null>(null);
+  const [customDraft, setCustomDraft] = useState(false);
 
   const room = useFetch<Room>(`/rooms/${roomId}`, 15_000);
   const status = useFetch<{ members: MemberStatus[] }>(`/rooms/${roomId}/status`, 5000);
@@ -67,7 +69,7 @@ export default function RoomPage() {
     try {
       await api(`/rooms/${roomId}`, {
         method: "PATCH",
-        body: { min_daily_minutes: minDraft, weekly_goal_minutes: weeklyDraft },
+        body: { min_daily_minutes: minDraft, weekly_goal_minutes: weeklyDraft === null ? null : clampMinutes(weeklyDraft, 60, 6000) },
       });
       setEditing(false);
       await room.reload();
@@ -136,6 +138,7 @@ export default function RoomPage() {
               onClick={() => {
                 setMinDraft(r.min_daily_minutes);
                 setWeeklyDraft(r.weekly_goal_minutes);
+                setCustomDraft(![null, 600, 1200, 2400].includes(r.weekly_goal_minutes));
                 setError(null);
                 setEditing(true);
               }}
@@ -158,13 +161,17 @@ export default function RoomPage() {
           ))}
           <ErrorLine text={error ?? t.error} />
           <div className="gap" />
-          <Pill icon="play" onClick={start} disabled={t.busy || (!!t.session && !inThisRoom)}>
+          <Pill
+            icon="play"
+            onClick={inThisRoom ? () => navigate("/") : start}
+            disabled={t.busy || (!!t.session && !inThisRoom)}
+          >
             {inThisRoom ? "Open timer" : "Start focus here"}
           </Pill>
-          {inThisRoom && (
-            <button className="mono muted c" style={{ marginTop: 14 }} onClick={() => navigate("/")}>
-              You are focusing here
-            </button>
+          {t.session && !inThisRoom && (
+            <p className="mono muted c" style={{ marginTop: 14 }}>
+              You are focusing in another room · finish that session first
+            </p>
           )}
           <button className="mono muted c" style={{ margin: "26px 0 0" }} disabled={leaving} onClick={leave}>
             Leave room
@@ -237,9 +244,15 @@ export default function RoomPage() {
         <div className="mono muted" style={{ margin: "26px 0 10px" }}>Room weekly goal</div>
         <div className="chs">
           {([["None", null], ["10h", 600], ["20h", 1200], ["40h", 2400]] as const).map(([label, v]) => (
-            <Chip key={label} on={weeklyDraft === v} onClick={() => setWeeklyDraft(v)}>{label}</Chip>
+            <Chip key={label} on={!customDraft && weeklyDraft === v} onClick={() => { setCustomDraft(false); setWeeklyDraft(v); }}>{label}</Chip>
           ))}
+          <Chip on={customDraft} onClick={() => { setCustomDraft(true); setWeeklyDraft(weeklyDraft ?? 900); }}>Custom</Chip>
         </div>
+        {customDraft && (
+          <div style={{ marginTop: 14 }}>
+            <DurationInput minutes={weeklyDraft ?? 900} onChange={setWeeklyDraft} />
+          </div>
+        )}
         <p className="muted2" style={{ marginTop: 18 }}>Applies to this week and onwards, for everyone in the room.</p>
         <ErrorLine text={error} />
         <div style={{ height: 24 }} />

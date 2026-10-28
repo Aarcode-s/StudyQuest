@@ -4,6 +4,7 @@ import { useAuth } from "../auth/useAuth";
 import { DotText } from "../components/Dots";
 import Figure from "../components/Figure";
 import Icon from "../components/Icon";
+import DurationInput, { clampMinutes } from "../components/DurationInput";
 import { Chip, ErrorLine, Header, Pill, Segmented, Sheet, Toggle } from "../components/ui";
 import { formatMinutes } from "../lib/format";
 import { setPrefs, usePrefs } from "../lib/prefs";
@@ -23,6 +24,42 @@ const PRESETS: [number, number, number][] = [
   [90, 20, 30],
 ];
 
+function Stepper({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  onChange: (v: number) => void;
+}) {
+  const set = (v: number) => onChange(Math.min(max, Math.max(min, v)));
+  return (
+    <div className="row2">
+      <div className="rt"><b>{label}</b></div>
+      <button type="button" className="rb sm" aria-label={`Less ${label}`} onClick={() => set(value - step)}>−</button>
+      <input
+        className="field"
+        style={{ width: 76, height: 46, padding: 0, textAlign: "center", borderRadius: 23 }}
+        inputMode="numeric"
+        aria-label={`${label} in minutes`}
+        value={value}
+        onChange={(e) => {
+          const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
+          if (!Number.isNaN(n)) set(n);
+        }}
+      />
+      <button type="button" className="rb sm" aria-label={`More ${label}`} onClick={() => set(value + step)}>+</button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +68,7 @@ export default function SettingsPage() {
   const [goal, setGoal] = useState<GoalKey | null>(null);
   const [pomo, setPomo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [custom, setCustom] = useState(0);
   if (!user) return null;
 
   async function save(patch: ProfilePatch) {
@@ -73,7 +111,7 @@ export default function SettingsPage() {
 
       <div className="card2 goals">
         {GOALS.map((g) => (
-          <button className="gr" key={g.key} onClick={() => { setError(null); setGoal(g.key); }}>
+          <button className="gr" key={g.key} onClick={() => { setError(null); setCustom(user[g.key]); setGoal(g.key); }}>
             <span className="mono muted">{g.label}</span>
             <DotText size={24}>{formatMinutes(user[g.key])}</DotText>
           </button>
@@ -98,7 +136,27 @@ export default function SettingsPage() {
             </Chip>
           ))}
         </div>
+        <div className="mono muted" style={{ margin: "26px 0 12px" }}>Or set your own</div>
+        <DurationInput
+          minutes={custom}
+          onChange={setCustom}
+        />
         <ErrorLine text={error} />
+        <div style={{ height: 24 }} />
+        <Pill
+          onClick={() =>
+            active &&
+            save({
+              [active.key]: clampMinutes(
+                custom,
+                10,
+                active.key === "daily_goal_minutes" ? 1440 : active.key === "weekly_goal_minutes" ? 10080 : 44640,
+              ),
+            })
+          }
+        >
+          Save
+        </Pill>
       </Sheet>
 
       <Sheet open={pomo} onClose={() => setPomo(false)}>
@@ -115,18 +173,13 @@ export default function SettingsPage() {
             </Chip>
           ))}
         </div>
-        <div className="mono muted" style={{ margin: "24px 0 12px" }}>Rounds before the long break</div>
-        <div className="chs">
-          {[2, 3, 4, 5, 6].map((n) => (
-            <Chip key={n} on={prefs.rounds === n} onClick={() => setPrefs({ rounds: n })}>{n}</Chip>
-          ))}
+        <div className="card2 list" style={{ marginTop: 20 }}>
+          <Stepper label="Focus (min)" value={prefs.focusMin} min={1} max={180} onChange={(v) => setPrefs({ focusMin: v })} />
+          <Stepper label="Break (min)" value={prefs.breakMin} min={1} max={60} onChange={(v) => setPrefs({ breakMin: v })} />
+          <Stepper label="Long break (min)" value={prefs.longBreakMin} min={1} max={90} onChange={(v) => setPrefs({ longBreakMin: v })} />
+          <Stepper label="Rounds before long break" value={prefs.rounds} min={1} max={10} onChange={(v) => setPrefs({ rounds: v })} />
         </div>
-        <div className="mono muted" style={{ margin: "24px 0 12px" }}>Long break</div>
-        <div className="chs">
-          {[15, 20, 30].map((n) => (
-            <Chip key={n} on={prefs.longBreakMin === n} onClick={() => setPrefs({ longBreakMin: n })}>{n} min</Chip>
-          ))}
-        </div>
+        <p className="muted2" style={{ margin: "-4px 6px 0" }}>Changes apply from the next block.</p>
         <div className="card2 list" style={{ marginTop: 24, marginBottom: 20 }}>
           {([
             ["autoStartBreaks", "Auto-start next block"],

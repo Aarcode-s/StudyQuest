@@ -20,6 +20,7 @@ export default function DockPage() {
   const rooms = useFetch<Room[]>("/rooms");
   const [controls, setControls] = useState(false);
   const [shift, setShift] = useState(0);
+  const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
   const timer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -31,6 +32,22 @@ export default function DockPage() {
     return () => clearInterval(id);
   }, []);
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  // Follow the phone turning sideways: size the clock from the free space.
+  useEffect(() => {
+    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    try {
+      screen.orientation?.unlock?.(); // allow rotation again if something locked it
+    } catch {
+      /* not supported */
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
 
   function tap() {
     setControls(true);
@@ -49,6 +66,9 @@ export default function DockPage() {
   const room = rooms.data?.find((r) => r.id === t.session?.room_id);
   const state = !t.session ? "NO TIMER" : t.onBreak ? "ON BREAK" : t.running ? "FOCUSING" : "PAUSED";
   const [dx, dy] = SHIFTS[shift];
+  const text = formatClock(t.seconds);
+  // Doto digits are about 0.6 em wide; keep the clock inside the screen.
+  const clockSize = Math.max(40, Math.min((vp.w * 0.9) / (text.length * 0.6), vp.h * 0.6, 280));
 
   return (
     <div className="dockp" onClick={tap}>
@@ -57,7 +77,7 @@ export default function DockPage() {
         <span className="mono">{room ? `${room.name} · ` : ""}{state}</span>
       </div>
       <div className="dkd" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
-        <DotText size={Math.min(104, window.innerWidth * 0.24)}>{formatClock(t.seconds)}</DotText>
+        <DotText size={clockSize}>{text}</DotText>
       </div>
       {controls ? (
         <div className="dkc" onClick={(e) => e.stopPropagation()}>
