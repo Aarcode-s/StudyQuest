@@ -54,6 +54,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refresh().finally(() => setLoading(false));
   }, [refresh]);
 
+  // Messages fade on their own so an old error never lingers on another page.
+  useEffect(() => {
+    if (!error && !notice) return;
+    const id = setTimeout(() => {
+      setError(null);
+      setNotice(null);
+    }, 6000);
+    return () => clearTimeout(id);
+  }, [error, notice]);
+
   const running = isRunning(session);
   const sessionId = session?.id;
 
