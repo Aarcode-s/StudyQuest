@@ -122,6 +122,8 @@ type Options = {
   body?: unknown;
   auth?: boolean;
   keepalive?: boolean;
+  /** Return the response body as text (used for the CSV export). */
+  text?: boolean;
   /** Skip the sign-out handling when the server answers 401 (used by logout). */
   silentUnauthorized?: boolean;
 };
@@ -138,6 +140,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
     body,
     auth = true,
     keepalive = false,
+    text = false,
     silentUnauthorized = false,
   } = opts;
 
@@ -162,6 +165,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
     }
 
     if (res.status === 204) return undefined as T;
+    if (text && res.ok) return (await res.text()) as T;
     let data: unknown = null;
     try {
       data = await res.json();

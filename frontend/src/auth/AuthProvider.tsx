@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { ApiError, api, setUnauthorizedHandler, tokenStore } from "../lib/api";
-import type { TokenResponse, User } from "../lib/types";
+import type { ProfilePatch, TokenResponse, User } from "../lib/types";
 import { AuthContext } from "./context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -80,9 +80,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNotice("Your account was deleted.");
   }, []);
 
+  const updateProfile = useCallback(async (patch: ProfilePatch) => {
+    setUser(await api<User>("/auth/me", { method: "PATCH", body: patch }));
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, notice, login, register, logout, deleteAccount }),
-    [user, loading, notice, login, register, logout, deleteAccount],
+    () => ({
+      user,
+      loading,
+      notice,
+      login,
+      register,
+      logout,
+      updateProfile,
+      deleteAccount,
+    }),
+    [user, loading, notice, login, register, logout, updateProfile, deleteAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

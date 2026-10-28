@@ -1,8 +1,10 @@
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ApiError, api } from "../lib/api";
-import type { Session } from "../lib/types";
+import type { PauseReason, Session } from "../lib/types";
 import { SessionContext, isRunning } from "./context";
+import { usePomodoro } from "./pomodoro";
 
 const HEARTBEAT_MS = 30_000;
 const MAX_DRIFT_SECONDS = 95; // the server stops counting ~90s after a missed heartbeat
@@ -110,6 +112,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           });
           api(`/sessions/${s.id}/pause`, {
             method: "POST",
+            body: { reason: "left_app" },
             keepalive: true,
           }).catch(() => {});
         }
@@ -139,35 +142,70 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const start = useCallback(
-    (roomId: string | number) =>
-      run(() => api<Session>(`/rooms/${roomId}/sessions`, { method: "POST" })),
+    (roomId: string | number, tag?: string | null) =>
+      run(() =>
+        api<Session>(`/rooms/${roomId}/sessions`, {
+          method: "POST",
+          body: tag ? { tag } : undefined,
+        }),
+      ),
     [run],
   );
 
-  const act = useCallback(
-    (action: "pause" | "resume") =>
+  const pause = useCallback(
+    (reason: PauseReason = "manual") =>
       run(async () => {
         const s = sessionRef.current;
         if (!s) throw new ApiError(0, "No active timer.");
-        return api<Session>(`/sessions/${s.id}/${action}`, { method: "POST" });
+        return api<Session>(`/sessions/${s.id}/pause`, {
+          method: "POST",
+          body: { reason },
+        });
       }),
     [run],
   );
 
-  const finish = useCallback(
+  const resume = useCallback(
     () =>
       run(async () => {
         const s = sessionRef.current;
-        if (!s) return null;
-        await api(`/sessions/${s.id}/finish`, { method: "POST" });
-        return null;
+        if (!s) throw new ApiError(0, "No active timer.");
+        return api<Session>(`/sessions/${s.id}/resume`, { method: "POST" });
       }),
     [run],
   );
+
+  const finish = useCallback(async (): Promise<Session | null> => {
+    const s = sessionRef.current;
+    if (!s) return null;
+    setBusy(true);
+    setError(null);
+    try {
+      const done = await api<Session>(`/sessions/${s.id}/finish`, {
+        method: "POST",
+      });
+      applySession(null);
+      return done;
+    } catch (e) {
+      setError(errText(e));
+      await refresh();
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }, [applySession, refresh]);
 
   const drift = running ? driftSince(fetchedAt) : 0;
   void now; // re-render each second while running; drift reads the clock
   const seconds = session ? session.focus_seconds + drift : 0;
+
+  const { view, skipBreak, onBreak } = usePomodoro(
+    session,
+    seconds,
+    running,
+    pause,
+    resume,
+  );
 
   return (
     <SessionContext.Provider
@@ -178,11 +216,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         error,
         notice,
         running,
+        onBreak,
         seconds,
+        pomo: view,
         start,
-        pause: () => act("pause"),
-        resume: () => act("resume"),
+        pause,
+        resume,
         finish,
+        skipBreak,
         dismiss: () => {
           setError(null);
           setNotice(null);
@@ -193,3 +234,4 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     </SessionContext.Provider>
   );
 }
+

@@ -4,39 +4,45 @@ export function formatClock(totalSeconds: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  const mm = String(h > 0 ? m : m).padStart(h > 0 ? 2 : 1, "0");
   const ss = String(sec).padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${ss}`
+    : `${String(m).padStart(2, "0")}:${ss}`;
 }
 
-/** 7500 -> "2h 05m", 2700 -> "45m", 0 -> "0m" */
+/** 4440 -> "1h 14m", 2700 -> "45m", 0 -> "0m" */
 export function formatTotal(totalSeconds: number): string {
   const minutes = Math.floor(Math.max(0, totalSeconds) / 60);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
+  if (h > 0) return m === 0 ? `${h}h` : `${h}h ${String(m).padStart(2, "0")}m`;
+  return `${m}m`;
 }
 
-const AVATAR_COLORS = [
-  "var(--cyan)",
-  "var(--pink)",
-  "var(--amber)",
-  "var(--lavender)",
-  "var(--lime)",
+/** 120 -> "2h", 90 -> "1h 30m", 45 -> "45m" */
+export function formatMinutes(minutes: number): string {
+  return formatTotal(minutes * 60);
+}
+
+export const WEEKDAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+export const WEEKDAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const WEEKDAY_LONG = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
 ];
-
-export function avatarColor(key: string | number): string {
-  const s = String(key);
-  let sum = 0;
-  for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
-  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
-}
-
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+export function monthShort(month: number): string {
+  return MONTHS[month - 1];
+}
 
 /** "2026-03-18" -> { year, month (1-12), day, weekday (Mon=0 ... Sun=6) } */
 export function parseDay(iso: string) {
@@ -45,19 +51,18 @@ export function parseDay(iso: string) {
   return { year, month, day, weekday };
 }
 
-/** "2026-03-18" -> "18 Mar" */
-export function formatDayShort(iso: string): string {
-  const d = parseDay(iso);
-  return `${d.day} ${MONTHS[d.month - 1]}`;
+export function pad2(n: number): string {
+  return String(n).padStart(2, "0");
 }
 
-/** "2026-03-18" -> "Wed 18 Mar 2026" */
-export function formatDayLong(iso: string): string {
-  const d = parseDay(iso);
-  const wd = WEEKDAYS[(d.weekday + 1) % 7];
-  return `${wd} ${d.day} ${MONTHS[d.month - 1]} ${d.year}`;
+/** Hour 0-23 -> "9 AM", "12 PM" */
+export function formatHour(h: number): string {
+  const suffix = h < 12 ? "AM" : "PM";
+  const x = h % 12 === 0 ? 12 : h % 12;
+  return `${x} ${suffix}`;
 }
 
-export function monthName(month: number): string {
-  return MONTHS[month - 1];
+export function percent(part: number, whole: number): number {
+  if (whole <= 0) return 0;
+  return Math.round((part * 100) / whole);
 }

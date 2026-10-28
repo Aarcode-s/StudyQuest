@@ -1,3 +1,4 @@
+
 import secrets
 
 from sqlalchemy import func, select
@@ -25,6 +26,10 @@ class NotAMemberError(Exception):
     """Room doesn't exist or the user isn't in it (deliberately indistinguishable)."""
 
 
+class NotOwnerError(Exception):
+    """Only the room owner may do this."""
+
+
 class OwnerCannotLeaveError(Exception):
     """Owner still has other members in the room."""
 
@@ -41,12 +46,26 @@ def _to_read(room: Room, role: str, member_count: int) -> RoomRead:
         role=role,
         member_count=member_count,
         created_at=room.created_at,
+        min_daily_minutes=room.min_daily_minutes,
+        weekly_goal_minutes=room.weekly_goal_minutes,
     )
 
 
-def create_room(db: Session, user_id: int, name: str) -> RoomRead:
+def create_room(
+    db: Session,
+    user_id: int,
+    name: str,
+    min_daily_minutes: int = 10,
+    weekly_goal_minutes: int | None = None,
+) -> RoomRead:
     for _ in range(5):
-        room = Room(name=name, invite_code=generate_invite_code(), owner_id=user_id)
+        room = Room(
+            name=name,
+            invite_code=generate_invite_code(),
+            owner_id=user_id,
+            min_daily_minutes=min_daily_minutes,
+            weekly_goal_minutes=weekly_goal_minutes,
+        )
         room.members.append(RoomMember(user_id=user_id, role="owner"))
         db.add(room)
         try:
@@ -129,6 +148,8 @@ def get_room_detail(db: Session, room_id: int, user_id: int) -> RoomDetail:
         role=membership.role,
         member_count=len(members),
         created_at=room.created_at,
+        min_daily_minutes=room.min_daily_minutes,
+        weekly_goal_minutes=room.weekly_goal_minutes,
         members=members,
     )
 
@@ -155,3 +176,24 @@ def leave_room(db: Session, room_id: int, user_id: int) -> None:
     else:
         db.delete(membership)
     db.commit()
+
+
+
+def update_room(db: Session, room_id: int, user_id: int, fields: dict) -> RoomRead:
+    """Owner-only: change the daily minimum and/or the room weekly goal."""
+    membership = get_membership(db, room_id, user_id)
+    if membership is None:
+        raise NotAMemberError
+    if membership.role != "owner":
+        raise NotOwnerError
+    room = db.get(Room, room_id)
+    if fields.get("min_daily_minutes") is not None:
+        room.min_daily_minutes = fields["min_daily_minutes"]
+    if "weekly_goal_minutes" in fields:
+        room.weekly_goal_minutes = fields["weekly_goal_minutes"]
+    db.commit()
+    db.refresh(room)
+    count = db.scalar(
+        select(func.count()).select_from(RoomMember).where(RoomMember.room_id == room_id)
+    )
+    return _to_read(room, "owner", count or 0)

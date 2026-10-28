@@ -1,6 +1,6 @@
 # StudyQuest
 
-A mobile-first, installable web app (PWA) for **group study accountability**. Friends join a room with an invite code, start focus timers, and see who is **Focusing**, **On break** or **Idle**, with today's totals, a leaderboard and a GitHub-style streak grid.
+A mobile-first, installable web app (PWA) for **group study accountability**. Friends join a room with an invite code, start focus timers (with a built-in Pomodoro), and see who is **Focusing**, **On break** or **Idle**. Rooms have a minimum daily commitment, and the dashboard shows daily / weekly / monthly goals, trends and when you study best. Designed for adults: no points, levels or badges, only honest trackers.
 
 > Times are **recorded timer time, not verified productivity**. The app cannot know what you do on your device.
 
@@ -14,19 +14,25 @@ A mobile-first, installable web app (PWA) for **group study accountability**. Fr
 
 | Feature | Notes |
 |---|---|
-| Accounts | Register / log in with email + password (Argon2 hashed) |
+| Accounts | Register / log in with email + password (Argon2 hashed). Change password in Settings > Account |
 | One device at a time | Logging in elsewhere signs the old device out ("Signed in on another device") |
 | Delete account | Password-confirmed; owned rooms pass to the earliest-joined member (or are deleted if you were alone); history is erased |
 | Stay signed in | 30-minute access token + 30-day refresh token, renewed silently |
-| Rooms | Create, join by invite code, leave. Non-members get 404 (rooms are invisible to outsiders) |
-| Focus timer | Start / pause / resume / finish. **The server owns the clock**; the phone only sends actions |
-| Live status | Room page polls every 5 s: Focusing / On break / Idle, elapsed, today total |
-| Leaderboard | Today / this week / this month per room |
-| Streak grid | Last 12 months, current and longest streak (a day counts at >= 10 min) |
+| **Focus screen** | Big dotted ring clock = **total focus** (count-up) with "% of daily goal"; small orb = **Pomodoro**. Tap the orb to swap which one is big |
+| **Pomodoro** | Presets 25/5, 50/10, 90/20, rounds before the long break, auto-start toggle, beep + vibration. A break **pauses the server session**, so friends see "On break" |
+| **Session tags + rating** | Pick a tag (Study, Project, Revision, Reading or your own); when you finish, rate how focused you felt (1-5, optional) |
+| **Dashboard** | Day / Week / Month circles toward your goals; tap a circle for a trend graph (goal line, best / lowest day, vs previous period) |
+| **Insights** | When you study best (hour strip), average and longest session, breaks per hour vs the anonymous room average, times you left the app, best weekday |
+| **Weekly review** | Shareable image card (week total, change vs last week, 7 bars, active days) |
+| **Rooms** | Create (name, daily minimum 10/20/30/45/60 min, optional weekly room goal), join by invite code, leave. Non-members get 404 |
+| **Room page** | Live (who is focusing), Race (each member runs toward **their own** daily goal), Week (who "showed up" each day) |
+| **Minimum commitment** | A day counts as "showed up" when you record at least the room's minimum in that room |
+| **Figures** | 12 stick-figure poses as profile picture; existing users are asked once to pick |
+| **Privacy** | "Hide my detailed stats" (rooms see totals only, and you are left out of room averages) and a weekly **rest day** that never counts as missed |
+| Export | Download all your sessions as CSV |
 | Dock mode | Black screen with only the clock (OLED friendly), screen stays awake |
-| Themes | System / Light (warm pastel) / Dark (black, grey, white + red accent) |
-| Keep awake | Screen Wake Lock so the phone does not sleep while a timer runs |
-| Auto-pause | Leaving the app (tab hidden) pauses the timer so you cannot cheat by switching apps |
+| Themes | System / Light / Dark. Dot-matrix type (Doto), red as the only accent |
+| Auto-pause | Leaving the app (tab hidden) pauses the timer (reason "left app"); there is no background tracking |
 | PWA | Install to the home screen, works as a standalone app |
 
 "Today" always means **India time (Asia/Kolkata)**. There is no midnight reset job: today's total is computed from stored sessions, and each session counts for the day it started.
@@ -42,7 +48,7 @@ A mobile-first, installable web app (PWA) for **group study accountability**. Fr
 
 **Backend** (`backend/`): Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic (migrations), psycopg 3, Argon2, PyJWT, slowapi (rate limits), pytest, uv.
 
-**Frontend** (`frontend/`): React + TypeScript (strict), Vite, react-router, vite-plugin-pwa, plain CSS variables for theming. Fonts: Sora + DM Sans.
+**Frontend** (`frontend/`): React + TypeScript (strict), Vite, react-router, vite-plugin-pwa, plain CSS variables for theming. Fonts (npm, bundled, no Google request): Doto (dot-matrix numbers/headings), Space Grotesk (body), Space Mono (small labels). The dot-matrix `%` sign and `:` are drawn by the app because Doto's own glyphs look like an X / a cross.
 
 **Hosting**: Neon (database), Render (API), Vercel (static frontend).
 
@@ -62,7 +68,7 @@ studyquest/
       db/            engine + session
       models/        users, rooms, room_members, focus_sessions, auth_sessions
       schemas/       request/response shapes
-      services/      business rules (sessions, stats, auth_sessions, status)
+      services/      business rules (sessions, stats, insights, profile, auth_sessions, status, account)
       routers/       auth, rooms, sessions, health
       dependencies/  current-user / membership checks
     alembic/versions/   migrations
@@ -70,6 +76,7 @@ studyquest/
     scripts/            PowerShell smoke tests
   frontend/
     src/  auth/ components/ hooks/ lib/ pages/ session/ styles/
+                  (session/pomodoro.ts = the Pomodoro cycle)
     public/             icons
     vercel.json  vite.config.ts
 ```
@@ -82,20 +89,26 @@ studyquest/
 |---|---|---|
 | GET | `/healthz` | Liveness (does not touch the DB) |
 | POST | `/auth/register`, `/auth/login` | Create account / sign in (login returns access + refresh token) |
-| POST | `/auth/refresh` | Swap a refresh token for a new access token |
-| POST | `/auth/logout` | End this device's session |
+| POST | `/auth/refresh`, `/auth/logout` | Renew access token / end this device's session |
+| GET, PATCH | `/auth/me` | Profile. PATCH: `avatar_key`, `daily/weekly/monthly_goal_minutes`, `rest_day` (0 = Mon, null clears), `hide_details` |
+| POST | `/auth/change-password` | `current_password`, `new_password` (403 if wrong) |
+| GET | `/auth/export` | All your sessions as CSV |
 | POST | `/auth/delete-account` | Permanently delete your account (needs `password`; 403 if wrong) |
-| GET | `/auth/me` | Current user |
-| GET/POST | `/rooms`, `/rooms/join` | List / create / join |
-| GET | `/rooms/{id}`, `/rooms/{id}/status` | Room info / live member states |
-| POST | `/rooms/{id}/leave` | Leave a room |
+| GET/POST | `/rooms`, `/rooms/join` | List / create (`name`, `min_daily_minutes`, `weekly_goal_minutes`) / join |
+| GET | `/rooms/{id}`, `/rooms/{id}/status` | Room info / live member states (with figure + daily goal) |
+| PATCH | `/rooms/{id}` | Owner only: change `min_daily_minutes` / `weekly_goal_minutes` (403 for members, 404 for outsiders) |
+| GET | `/rooms/{id}/week` | "Who showed up" matrix for this week (1 showed, 0 missed, -1 not yet, 2 rest day) |
 | GET | `/rooms/{id}/leaderboard?period=today\|week\|month` | Ranking |
-| POST | `/rooms/{id}/sessions` | Start a focus session |
+| POST | `/rooms/{id}/leave` | Leave a room |
+| POST | `/rooms/{id}/sessions` | Start a focus session (optional body `{tag}`) |
 | GET | `/sessions/active` | My running/paused session |
-| POST | `/sessions/{id}/heartbeat \| pause \| resume \| finish` | Timer actions |
+| POST | `/sessions/{id}/heartbeat \| pause \| resume \| finish` | Timer actions. `pause` takes an optional `{reason: manual\|left_app\|pomodoro}` |
+| PATCH | `/sessions/{id}` | Set `tag` and/or `rating` (1-5) |
 | GET | `/stats/daily?days=365` | Per-day totals + streaks |
+| GET | `/stats/insights` | Peak hours, average/longest session, breaks per hour, room averages (anonymous, needs 2+ other members) |
+| GET | `/stats/review?weeks_ago=0` | Weekly review numbers |
 
-Migrations, in order: `dc9ae80d3fc8` (users, rooms, members) -> `a24b73365126` (focus sessions + constraints) -> `b3c9e17a52d4` (auth sessions).
+Migrations, in order: `dc9ae80d3fc8` (users, rooms, members) -> `a24b73365126` (focus sessions + constraints) -> `b3c9e17a52d4` (auth sessions) -> `c5e1a9d2f4b8` (profiles, goals, room commitment, session tags and break stats; all new columns have defaults, so existing data is untouched).
 
 ---
 
@@ -137,7 +150,7 @@ The URL must start with `postgresql+psycopg://`.
 ### Frontend
 ```powershell
 cd frontend
-npm install
+npm install   # also installs the bundled fonts
 echo VITE_API_URL=http://localhost:8000 > .env.local
 npm run dev
 ```
@@ -182,7 +195,8 @@ uv run python -m pytest
 - WebSockets for instant status instead of 5 s polling
 - Monthly recap (stats PDF) so old rows can be archived
 - Optional keep-awake pinger for Render
-- Gamification (levels, badges) on top of the existing totals
+- Password reset by email
+- Background-safe timing (a notification-based approach) if pause-on-leave proves too strict
 
 ## 9. Troubleshooting
 | Symptom | Cause / fix |

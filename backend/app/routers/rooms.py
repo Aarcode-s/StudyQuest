@@ -5,9 +5,11 @@ from fastapi import APIRouter, HTTPException, Query, Request, status
 from app.core.rate_limit import limiter
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
-from app.schemas.room import JoinRequest, RoomCreate, RoomDetail, RoomRead
+from app.schemas.room import JoinRequest, RoomCreate, RoomDetail, RoomRead, RoomUpdate
+from app.schemas.insights import RoomWeek
 from app.schemas.stats import Leaderboard
 from app.schemas.status import RoomStatus
+from app.services import insights as insights_service
 from app.services import rooms as room_service
 from app.services import stats as stats_service
 from app.services import status as status_service
@@ -23,14 +25,18 @@ router = APIRouter(prefix="/rooms", tags=["rooms"])
 )
 @limiter.limit("10/minute")
 def create_room(request: Request, data: RoomCreate, user: CurrentUser, db: DbSession):
-    return room_service.create_room(db, user.id, data.name)
+    return room_service.create_room(
+        db, user.id, data.name, data.min_daily_minutes, data.weekly_goal_minutes
+    )
 
 
 @router.post("/join", response_model=RoomRead, summary="Join a room with an invite code")
 @limiter.limit("10/minute")
 def join_room(request: Request, data: JoinRequest, user: CurrentUser, db: DbSession):
     try:
-        return room_service.join_room(db, user.id, data.invite_code)
+        return status_service.enrich_rooms(
+            db, [room_service.join_room(db, user.id, data.invite_code)]
+        )[0]
     except room_service.InvalidInviteCodeError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Invalid invite code")
     except room_service.AlreadyMemberError:
@@ -39,7 +45,7 @@ def join_room(request: Request, data: JoinRequest, user: CurrentUser, db: DbSess
 
 @router.get("", response_model=list[RoomRead], summary="List the rooms you belong to")
 def list_my_rooms(user: CurrentUser, db: DbSession):
-    return room_service.list_rooms(db, user.id)
+    return status_service.enrich_rooms(db, room_service.list_rooms(db, user.id))
 
 
 @router.get(
@@ -49,9 +55,29 @@ def list_my_rooms(user: CurrentUser, db: DbSession):
 )
 def get_room(room_id: int, user: CurrentUser, db: DbSession):
     try:
-        return room_service.get_room_detail(db, room_id, user.id)
+        detail = room_service.get_room_detail(db, room_id, user.id)
+        status_service.enrich_rooms(db, [detail])
+        return detail
     except room_service.NotAMemberError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+
+@router.patch(
+    "/{room_id}",
+    response_model=RoomRead,
+    summary="Owner only: change the daily minimum or room weekly goal",
+)
+def update_room(room_id: int, data: RoomUpdate, user: CurrentUser, db: DbSession):
+    fields = {k: getattr(data, k) for k in data.model_fields_set}
+    try:
+        room = room_service.update_room(db, room_id, user.id, fields)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
+    except room_service.NotOwnerError:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail="Only the room owner can change this"
+        )
+    return status_service.enrich_rooms(db, [room])[0]
 
 
 @router.get(
@@ -62,6 +88,18 @@ def get_room(room_id: int, user: CurrentUser, db: DbSession):
 def room_status(room_id: int, user: CurrentUser, db: DbSession):
     try:
         return status_service.get_room_status(db, room_id, user.id)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+
+@router.get(
+    "/{room_id}/week",
+    response_model=RoomWeek,
+    summary="Who showed up each day this week (members only)",
+)
+def room_week(room_id: int, user: CurrentUser, db: DbSession):
+    try:
+        return insights_service.get_room_week(db, room_id, user.id)
     except room_service.NotAMemberError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
 

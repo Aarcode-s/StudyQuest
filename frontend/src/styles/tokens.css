@@ -1,101 +1,31 @@
-/* Dark is the default: black, grey and white with a single red accent.
-   Light is switched on by <html data-theme="light">.
-   Token NAMES (--violet, --lime ...) are kept so no component has to change;
-   in dark mode they now hold greys / white / red. Status never relies on hue
-   alone: red = live, white = paused, grey = idle. */
 :root,
-[data-theme="dark"] {
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --card: #101010;
+  --card2: #191919;
+  --line: #262626;
+  --text: #ffffff;
+  --muted: #8a8a8a;
+  --dot-off: #2a2a2a;
+  --dot-off2: #3a3a3a;
+  --red: #ff3b36;
+  --btn: #ffffff;
+  --btnt: #000000;
+  --shadow: rgba(0, 0, 0, 0.45);
   color-scheme: dark;
-
-  --bg: #0a0a0a;
-  --bg-dock: #000000;
-  --surface: #161616;
-  --surface-deep: #0f0f0f;
-  --surface-raised: #262626;
-  --border-dashed: #3a3a3a;
-
-  --text: #f5f5f5;
-  --text-soft: #bdbdbd;
-  --text-muted: #8f8f8f;
-
-  /* Fills: avatars, tiles, badges, buttons. Text on them uses --on-fill. */
-  --violet: #e5322d; /* primary accent: red */
-  --pink: #8f8f8f; /* mid grey */
-  --cyan: #d6d6d6; /* light grey */
-  --lime: #ff3b36; /* "live" red: Focusing, Start, ring while running */
-  --amber: #f5f5f5; /* white: On break, Pause, ring while paused */
-  --lavender: #bdbdbd; /* silver */
-  --on-fill: #0a0a0a;
-
-  /* Text colours that must stay readable on the page background. */
-  --link: #ff6b66;
-  --warn-text: #ff8a85;
-  --owner-text: #d6d6d6;
-  --focus-ring: #f5f5f5;
-
-  --badge-bg: #262626;
-  --badge-text: #d6d6d6;
-
-  --error-text: #ff8a85;
-  --error-bg: #2b1112;
-
-  --gradient: linear-gradient(90deg, #ff3b36, #f5f5f5);
-  --on-accent: #0a0a0a;
-
-  /* Streak grid: none -> a lot (dark grey -> deep red -> bright red) */
-  --g0: #1e1e1e;
-  --g1: #5c1a1a;
-  --g2: #9c2222;
-  --g3: #e03230;
-  --g4: #ff6b66;
-
-  --font-display: "Sora", sans-serif;
-  --font-body: "DM Sans", sans-serif;
-
-  --radius-sm: 14px;
-  --radius-md: 20px;
-  --radius-lg: 26px;
 }
-
-[data-theme="light"] {
+:root[data-theme="light"] {
+  --bg: #eeeeed;
+  --card: #ffffff;
+  --card2: #f6f6f5;
+  --line: #dedddb;
+  --text: #0b0b0b;
+  --muted: #77777a;
+  --dot-off: #d6d6d3;
+  --dot-off2: #c3c3c0;
+  --red: #e0202a;
+  --btn: #0b0b0b;
+  --btnt: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.12);
   color-scheme: light;
-
-  --bg: #fff6ec;
-  --bg-dock: #000000;
-  --surface: #fffcf7;
-  --surface-deep: #fbebdd;
-  --surface-raised: #f3e3d3;
-  --border-dashed: #e4cdb8;
-
-  --text: #2e2233;
-  --text-soft: #5c4d5a;
-  --text-muted: #6e5f6b;
-
-  --violet: #7c4dcc;
-  --pink: #f7b8cf;
-  --cyan: #a8dde0;
-  --lime: #b9e0a5;
-  --amber: #ffd6a5;
-  --lavender: #dccbf5;
-  --on-fill: #2e2233;
-
-  --link: #1f7a7a;
-  --warn-text: #a85a12;
-  --owner-text: #6a3fb5;
-  --focus-ring: #7c4dcc;
-
-  --badge-bg: #ddf0f0;
-  --badge-text: #176666;
-
-  --error-text: #b42343;
-  --error-bg: #fde3e6;
-
-  --gradient: linear-gradient(90deg, #7c4dcc, #c2457a);
-  --on-accent: #ffffff;
-
-  --g0: #f3e8dd;
-  --g1: #e3cbf5;
-  --g2: #c9a5ec;
-  --g3: #a97bdd;
-  --g4: #7c4dcc;
 }

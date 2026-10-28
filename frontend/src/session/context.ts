@@ -1,5 +1,18 @@
 import { createContext } from "react";
-import type { Session } from "../lib/types";
+import type { PauseReason, Session } from "../lib/types";
+
+export type PomoPhase = "focus" | "break";
+
+export type PomoView = {
+  phase: PomoPhase;
+  round: number;
+  rounds: number;
+  long: boolean; // the current/next break is the long one
+  /** Seconds left in the current focus block or break. */
+  remaining: number;
+  /** 0..1 progress through the current block. */
+  frac: number;
+};
 
 export type SessionState = {
   session: Session | null;
@@ -8,11 +21,16 @@ export type SessionState = {
   error: string | null;
   notice: string | null;
   running: boolean;
+  /** True when the server session is paused by a Pomodoro break. */
+  onBreak: boolean;
   seconds: number; // focus seconds to display right now
-  start: (roomId: string | number) => Promise<void>;
-  pause: () => Promise<void>;
+  pomo: PomoView;
+  start: (roomId: string | number, tag?: string | null) => Promise<void>;
+  pause: (reason?: PauseReason) => Promise<void>;
   resume: () => Promise<void>;
-  finish: () => Promise<void>;
+  /** Ends the session and returns it (for the end-of-session sheet). */
+  finish: () => Promise<Session | null>;
+  skipBreak: () => void;
   dismiss: () => void;
 };
 

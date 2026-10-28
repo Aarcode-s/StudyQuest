@@ -1,3 +1,4 @@
+
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -57,6 +58,8 @@ def _read(s: FocusSession, now: datetime) -> SessionRead:
         started_at=s.started_at,
         paused_at=s.paused_at,
         ended_at=s.ended_at,
+        tag=s.tag,
+        rating=s.rating,
     )
 
 
@@ -95,7 +98,9 @@ def _get_active(db: Session, user_id: int) -> FocusSession | None:
     )
 
 
-def start_session(db: Session, user_id: int, room_id: int) -> SessionRead:
+def start_session(
+    db: Session, user_id: int, room_id: int, tag: str | None = None
+) -> SessionRead:
     if get_membership(db, room_id, user_id) is None:
         raise NotAMemberError
 
@@ -111,6 +116,7 @@ def start_session(db: Session, user_id: int, room_id: int) -> SessionRead:
     s = FocusSession(
         user_id=user_id,
         room_id=room_id,
+        tag=tag,
         status="focusing",
         accumulated_seconds=0,
         started_at=now,
@@ -127,7 +133,9 @@ def start_session(db: Session, user_id: int, room_id: int) -> SessionRead:
     return _read(s, now)
 
 
-def pause_session(db: Session, user_id: int, session_id: int) -> SessionRead:
+def pause_session(
+    db: Session, user_id: int, session_id: int, reason: str = "manual"
+) -> SessionRead:
     s = _get_own(db, session_id, user_id)
     if s.status != "focusing":
         raise InvalidTransitionError
@@ -136,6 +144,9 @@ def pause_session(db: Session, user_id: int, session_id: int) -> SessionRead:
     s.paused_at = _cutoff(s, now)
     s.segment_started_at = None
     s.status = "paused"
+    s.pause_count += 1
+    if reason == "left_app":
+        s.left_app_count += 1
     db.commit()
     db.refresh(s)
     return _read(s, now)
@@ -146,6 +157,8 @@ def resume_session(db: Session, user_id: int, session_id: int) -> SessionRead:
     if s.status != "paused":
         raise InvalidTransitionError
     now = _now()
+    if s.paused_at is not None:
+        s.break_seconds += max(0, int((now - s.paused_at).total_seconds()))
     s.status = "focusing"
     s.segment_started_at = now
     s.last_heartbeat_at = now
@@ -176,6 +189,20 @@ def finish_session(db: Session, user_id: int, session_id: int) -> SessionRead:
     return _read(s, now)
 
 
+def update_session(
+    db: Session, user_id: int, session_id: int, fields: dict
+) -> SessionRead:
+    """Set the tag and/or rating (the end-of-session sheet)."""
+    s = _get_own(db, session_id, user_id)
+    if "tag" in fields:
+        s.tag = fields["tag"]
+    if "rating" in fields:
+        s.rating = fields["rating"]
+    db.commit()
+    db.refresh(s)
+    return _read(s, _now())
+
+
 def get_active_session(db: Session, user_id: int) -> SessionRead | None:
     s = _get_active(db, user_id)
     return _read(s, _now()) if s else None
@@ -186,3 +213,4 @@ def end_active_session_in_room(db: Session, user_id: int, room_id: int) -> None:
     s = _get_active(db, user_id)
     if s is not None and s.room_id == room_id:
         _bank_and_finish(s, _now())
+

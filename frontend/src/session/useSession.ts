@@ -1,3 +1,4 @@
+
 import { useContext } from "react";
 import { SessionContext } from "./context";
 
@@ -6,3 +7,4 @@ export function useSession() {
   if (!ctx) throw new Error("useSession must be used inside SessionProvider");
   return ctx;
 }
+

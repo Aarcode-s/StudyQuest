@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { User } from "../lib/types";
+import type { ProfilePatch, User } from "../lib/types";
 
 export type AuthState = {
   user: User | null;
@@ -13,6 +13,8 @@ export type AuthState = {
     password: string,
   ) => Promise<void>;
   logout: () => void;
+  /** Saves profile fields (figure, goals, rest day, privacy). */
+  updateProfile: (patch: ProfilePatch) => Promise<void>;
   /** Permanently deletes the account. Throws ApiError (e.g. wrong password). */
   deleteAccount: (password: string) => Promise<void>;
 };

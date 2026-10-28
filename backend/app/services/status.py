@@ -1,3 +1,4 @@
+
 from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
 
@@ -8,6 +9,8 @@ from app.core.config import settings
 from app.models.focus_session import FocusSession
 from app.models.room_member import RoomMember
 from app.models.user import User
+from app.models.room import Room
+from app.schemas.room import RoomRead
 from app.schemas.status import MemberStatus, RoomStatus
 from app.services.rooms import NotAMemberError, get_membership
 
@@ -28,7 +31,13 @@ def get_room_status(db: Session, room_id: int, user_id: int) -> RoomStatus:
     day_start = _start_of_today_utc(now)
 
     members = db.execute(
-        select(RoomMember.user_id, User.username)
+        select(
+            RoomMember.user_id,
+            User.username,
+            User.avatar_key,
+            User.daily_goal_minutes,
+            User.hide_details,
+        )
         .join(User, User.id == RoomMember.user_id)
         .where(RoomMember.room_id == room_id)
         .order_by(User.username)
@@ -54,7 +63,7 @@ def get_room_status(db: Session, room_id: int, user_id: int) -> RoomStatus:
             active[s.user_id] = s
 
     result = []
-    for uid, username in members:
+    for uid, username, avatar, goal, hidden in members:
         s = active.get(uid)
         if s is None or _is_stale(s, now):
             state, elapsed = "idle", 0
@@ -71,6 +80,55 @@ def get_room_status(db: Session, room_id: int, user_id: int) -> RoomStatus:
                 state=state,
                 elapsed_seconds=elapsed,
                 today_seconds=today_total.get(uid, 0),
+                avatar_key=avatar,
+                daily_goal_minutes=goal,
+                hidden=hidden,
             )
         )
     return RoomStatus(room_id=room_id, members=result)
+
+
+
+def enrich_rooms(db: Session, rooms: list[RoomRead]) -> list[RoomRead]:
+    """Fill in focusing_now and showed_up_today for the room cards."""
+    if not rooms:
+        return rooms
+    now = _now()
+    tz = ZoneInfo(settings.app_timezone)
+    day_start = _start_of_today_utc(now)
+    weekday = now.astimezone(tz).weekday()
+    ids = [r.id for r in rooms]
+
+    members = db.execute(
+        select(RoomMember.room_id, RoomMember.user_id, User.rest_day)
+        .join(User, User.id == RoomMember.user_id)
+        .where(RoomMember.room_id.in_(ids))
+    ).all()
+    sessions = db.scalars(
+        select(FocusSession).where(
+            FocusSession.room_id.in_(ids),
+            (FocusSession.started_at >= day_start)
+            | FocusSession.status.in_(("focusing", "paused")),
+        )
+    ).all()
+
+    secs: dict[tuple[int, int], int] = {}
+    focusing: dict[int, set[int]] = {}
+    for s in sessions:
+        if s.started_at >= day_start:
+            k = (s.room_id, s.user_id)
+            secs[k] = secs.get(k, 0) + focus_seconds(s, now)
+        if s.status == "focusing" and not _is_stale(s, now):
+            focusing.setdefault(s.room_id, set()).add(s.user_id)
+
+    for room in rooms:
+        need = room.min_daily_minutes * 60
+        showed = 0
+        for rid, uid, rest in members:
+            if rid != room.id:
+                continue
+            if secs.get((rid, uid), 0) >= need or rest == weekday:
+                showed += 1
+        room.focusing_now = len(focusing.get(room.id, ()))
+        room.showed_up_today = showed
+    return rooms

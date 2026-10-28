@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 from sqlalchemy import (
@@ -5,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    SmallInteger,
     String,
     text,
 )
@@ -19,6 +21,10 @@ class FocusSession(Base):
         CheckConstraint(
             "status IN ('focusing', 'paused', 'finished')",
             name="ck_focus_sessions_status",
+        ),
+        CheckConstraint(
+            "rating IS NULL OR (rating >= 1 AND rating <= 5)",
+            name="ck_focus_sessions_rating_range",
         ),
         CheckConstraint(
             "accumulated_seconds >= 0", name="ck_focus_sessions_accumulated_nonneg"
@@ -68,3 +74,12 @@ class FocusSession(Base):
     last_heartbeat_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
+
+    # Filled in when the session ends (all optional).
+    tag: Mapped[str | None] = mapped_column(String(20), default=None)
+    rating: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+
+    # Break bookkeeping for the insights page.
+    pause_count: Mapped[int] = mapped_column(server_default=text("0"), default=0)
+    left_app_count: Mapped[int] = mapped_column(server_default=text("0"), default=0)
+    break_seconds: Mapped[int] = mapped_column(server_default=text("0"), default=0)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from app.core.rate_limit import limiter
 from app.core.security import create_access_token, verify_password
@@ -6,13 +6,14 @@ from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.schemas.auth import (
     AccessTokenResponse,
+    ChangePasswordRequest,
     DeleteAccountRequest,
     LoginRequest,
     RefreshRequest,
     TokenResponse,
 )
-from app.schemas.user import UserCreate, UserRead
-from app.services import auth_sessions
+from app.schemas.user import ProfileUpdate, UserCreate, UserRead
+from app.services import auth_sessions, profile
 from app.services.account import delete_account
 from app.services.auth import DuplicateUserError, authenticate_user, create_user
 
@@ -82,6 +83,38 @@ def logout(user: CurrentUser, db: DbSession):
 @router.get("/me", response_model=UserRead)
 def me(current_user: CurrentUser):
     return current_user
+
+
+@router.patch("/me", response_model=UserRead, summary="Update your profile and goals")
+def update_me(data: ProfileUpdate, user: CurrentUser, db: DbSession):
+    return profile.update_profile(db, user, data)
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Change your password (current password required)",
+)
+@limiter.limit("5/minute")
+def change_password(
+    request: Request, data: ChangePasswordRequest, user: CurrentUser, db: DbSession
+):
+    try:
+        profile.change_password(db, user, data.current_password, data.new_password)
+    except profile.WrongPasswordError:
+        # 403, not 401, so a typo does not sign the user out in the app.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password"
+        )
+
+
+@router.get("/export", summary="Download all your sessions as CSV")
+def export_data(user: CurrentUser, db: DbSession):
+    return Response(
+        content=profile.export_csv(db, user),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="studyquest.csv"'},
+    )
 
 
 @router.post(

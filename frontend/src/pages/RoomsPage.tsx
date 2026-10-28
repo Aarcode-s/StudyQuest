@@ -1,326 +1,143 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../auth/useAuth";
-import ThemeToggle from "../components/ThemeToggle";
+import { useNavigate } from "react-router-dom";
+import { ErrorLine, Chip, Field, Header, Pill, RoundBtn, Sheet } from "../components/ui";
+import { useFetch } from "../hooks/useFetch";
 import { ApiError, api } from "../lib/api";
 import type { Room } from "../lib/types";
-import "./rooms.css";
 
-type Panel = "create" | "join" | null;
-
-const TILE_COLORS = [
-  "var(--lime)",
-  "var(--pink)",
-  "var(--amber)",
-  "var(--cyan)",
-  "var(--lavender)",
+const MINS = [10, 20, 30, 45, 60];
+const WEEKLY: { label: string; value: number | null }[] = [
+  { label: "None", value: null },
+  { label: "10h", value: 600 },
+  { label: "20h", value: 1200 },
+  { label: "40h", value: 2400 },
 ];
 
-function tileColor(id: number | string): string {
-  const s = String(id);
-  let sum = 0;
-  for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
-  return TILE_COLORS[sum % TILE_COLORS.length];
-}
-
-function errorText(e: unknown): string {
-  return e instanceof ApiError ? e.message : "Something went wrong.";
+function RoomCard({ room, onOpen }: { room: Room; onOpen: () => void }) {
+  return (
+    <button className="rc" onClick={onOpen}>
+      <div className="rct">
+        <div className="rav dot">{room.name.slice(0, 1).toUpperCase()}</div>
+        <div className="rcm">
+          <b>{room.name}</b>
+          <span className="mono muted">
+            {room.member_count} {room.member_count === 1 ? "member" : "members"} · min {room.min_daily_minutes} min
+          </span>
+        </div>
+      </div>
+      <div className="rcb">
+        {room.focusing_now > 0 ? (
+          <span className="lv"><i className="live" />{room.focusing_now} FOCUSING</span>
+        ) : (
+          <span className="lv q">QUIET</span>
+        )}
+        <span className="showed">
+          <span className="mono muted">SHOWED UP</span>
+          {Array.from({ length: Math.min(room.member_count, 8) }, (_, i) => (
+            <i key={i} className={`sd ${i < room.showed_up_today ? "on" : ""}`} />
+          ))}
+        </span>
+      </div>
+    </button>
+  );
 }
 
 export default function RoomsPage() {
-  const { user, logout, deleteAccount } = useAuth();
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  const [panel, setPanel] = useState<Panel>(null);
-  const [value, setValue] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const rooms = useFetch<Room[]>("/rooms", 10_000);
+  const [create, setCreate] = useState(false);
+  const [join, setJoin] = useState(false);
+  const [name, setName] = useState("");
+  const [min, setMin] = useState(10);
+  const [weekly, setWeekly] = useState<number | null>(null);
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [deleting, setDeleting] = useState(false);
-  const [deletePw, setDeletePw] = useState("");
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const fetchRooms = useCallback(() => api<Room[]>("/rooms"), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchRooms()
-      .then((r) => {
-        if (!cancelled) setRooms(r);
-      })
-      .catch((e) => {
-        if (!cancelled) setLoadError(errorText(e));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchRooms, reloadKey]);
-
-  function retry() {
-    setLoading(true);
-    setLoadError(null);
-    setReloadKey((k) => k + 1);
-  }
-
-  function togglePanel(next: Exclude<Panel, null>) {
-    setPanel((p) => (p === next ? null : next));
-    setValue("");
-    setFormError(null);
-  }
-
-  async function submit(e: FormEvent) {
+  async function submitCreate(e: FormEvent) {
     e.preventDefault();
-    if (!panel) return;
-    const text = value.trim();
-    if (!text) {
-      setFormError(
-        panel === "create" ? "Enter a room name." : "Enter an invite code.",
-      );
-      return;
-    }
     setBusy(true);
-    setFormError(null);
+    setError(null);
     try {
-      if (panel === "create") {
-        await api("/rooms", { method: "POST", body: { name: text } });
-      } else {
-        await api("/rooms/join", {
-          method: "POST",
-          body: { invite_code: text.toUpperCase() },
-        });
-      }
-      setRooms(await fetchRooms());
-      setPanel(null);
-      setValue("");
+      const r = await api<Room>("/rooms", {
+        method: "POST",
+        body: { name: name.trim(), min_daily_minutes: min, weekly_goal_minutes: weekly },
+      });
+      setCreate(false);
+      setName("");
+      navigate(`/rooms/${r.id}`);
     } catch (err) {
-      setFormError(errorText(err));
+      setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
       setBusy(false);
     }
   }
 
-  async function confirmDelete(e: FormEvent) {
+  async function submitJoin(e: FormEvent) {
     e.preventDefault();
-    if (!deletePw) {
-      setDeleteError("Enter your password to confirm.");
-      return;
-    }
-    setDeleteBusy(true);
-    setDeleteError(null);
+    setBusy(true);
+    setError(null);
     try {
-      await deleteAccount(deletePw); // success signs you out automatically
+      const r = await api<Room>("/rooms/join", { method: "POST", body: { invite_code: code } });
+      setJoin(false);
+      setCode("");
+      navigate(`/rooms/${r.id}`);
     } catch (err) {
-      setDeleteError(errorText(err));
-      setDeleteBusy(false);
-    }
-  }
-
-  function cancelDelete() {
-    setDeleting(false);
-    setDeletePw("");
-    setDeleteError(null);
-  }
-
-  async function copyCode(room: Room) {
-    try {
-      await navigator.clipboard.writeText(room.invite_code);
-      setNotice(null);
-      setCopiedId(room.id);
-      setTimeout(() => setCopiedId((c) => (c === room.id ? null : c)), 1500);
-    } catch {
-      setNotice("Couldn't copy. Press and hold the code to copy it.");
+      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <main className="screen rooms">
-      <header className="rooms__head">
-        <div>
-          <div className="rooms__welcome">Welcome back</div>
-          <h1 className="title rooms__title">Your rooms</h1>
-        </div>
-        <div className="rooms__tools">
-          <ThemeToggle />
-          <Link to="/stats" className="avatar" aria-label="Your streak and stats">
-            {user?.username.charAt(0).toUpperCase()}
-          </Link>
-        </div>
-      </header>
-
-      <Link to="/stats" className="stats-link">
-        <span>
-          <strong>Your streak and daily grid</strong>
-          <small>See how many days in a row you have focused</small>
-        </span>
-        <span aria-hidden="true">&rsaquo;</span>
-      </Link>
-
-      <div className="rooms__actions">
-        <button
-          type="button"
-          className="btn-gradient"
-          aria-pressed={panel === "create"}
-          onClick={() => togglePanel("create")}
-        >
-          + Create room
-        </button>
-        <button
-          type="button"
-          className="btn-outline"
-          aria-pressed={panel === "join"}
-          onClick={() => togglePanel("join")}
-        >
-          Join with code
-        </button>
+    <>
+      <Header
+        title="Rooms"
+        right={<RoundBtn small icon="plus" label="New room" onClick={() => { setError(null); setCreate(true); }} />}
+      />
+      {rooms.error && <ErrorLine text={rooms.error} />}
+      {rooms.data?.map((r) => (
+        <RoomCard key={r.id} room={r} onOpen={() => navigate(`/rooms/${r.id}`)} />
+      ))}
+      {rooms.data?.length === 0 && (
+        <p className="mono muted c" style={{ margin: "30px 0" }}>No rooms yet · create one or join with a code</p>
+      )}
+      <div style={{ marginTop: 8 }}>
+        <Pill kind="ghost" onClick={() => { setError(null); setJoin(true); }}>Join with a code</Pill>
       </div>
 
-      {panel && (
-        <form className="panel" onSubmit={submit} noValidate>
-          <div className="panel__row">
-            <input
-              aria-label={panel === "create" ? "Room name" : "Invite code"}
-              placeholder={
-                panel === "create" ? "Room name" : "Invite code, e.g. K7M2QX9D"
-              }
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              autoFocus
-              autoCapitalize={panel === "join" ? "characters" : "words"}
-              autoComplete="off"
-            />
-            <button className="btn-primary" type="submit" disabled={busy}>
-              {busy ? "..." : panel === "create" ? "Create" : "Join"}
-            </button>
+      <Sheet open={create} onClose={() => setCreate(false)}>
+        <form onSubmit={submitCreate}>
+          <h2 className="dot">New room</h2>
+          <Field label="Room name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="DSA grind" />
+          <div className="mono muted" style={{ margin: "26px 6px 10px" }}>Daily minimum to “show up”</div>
+          <div className="chs">
+            {MINS.map((m) => (
+              <Chip key={m} on={min === m} onClick={() => setMin(m)}>{m} min</Chip>
+            ))}
           </div>
-          {formError && (
-            <div className="error-box" role="alert">
-              {formError}
-            </div>
-          )}
+          <div className="mono muted" style={{ margin: "26px 6px 10px" }}>Room weekly goal (optional)</div>
+          <div className="chs">
+            {WEEKLY.map((w) => (
+              <Chip key={w.label} on={weekly === w.value} onClick={() => setWeekly(w.value)}>{w.label}</Chip>
+            ))}
+          </div>
+          <ErrorLine text={error} />
+          <div style={{ height: 28 }} />
+          <Pill type="submit" disabled={busy || !name.trim()}>Create room</Pill>
         </form>
-      )}
+      </Sheet>
 
-      {notice && <div className="notice">{notice}</div>}
-
-      {loading ? (
-        <div className="notice">Loading rooms...</div>
-      ) : loadError ? (
-        <div className="panel">
-          <div className="error-box" role="alert">
-            {loadError}
-          </div>
-          <button type="button" className="btn-outline" onClick={retry}>
-            Try again
-          </button>
-        </div>
-      ) : rooms.length === 0 ? (
-        <div className="empty">
-          No rooms yet. Create one, or join a friend's room with their invite
-          code.
-        </div>
-      ) : (
-        <ul className="room-list">
-          {rooms.map((room) => (
-            <li key={room.id} className="room-card">
-              <Link to={`/rooms/${room.id}`} className="room-card__top">
-                <div
-                  className="room-card__tile"
-                  style={{ background: tileColor(room.id) }}
-                  aria-hidden="true"
-                >
-                  {room.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="room-card__info">
-                  <div className="room-card__name">{room.name}</div>
-                  <div className="room-card__members">
-                    {room.member_count}{" "}
-                    {room.member_count === 1 ? "member" : "members"}
-                  </div>
-                </div>
-                <span
-                  className={`badge ${room.role === "owner" ? "badge--owner" : ""}`}
-                >
-                  {room.role.charAt(0).toUpperCase() + room.role.slice(1)}
-                </span>
-              </Link>
-              <div className="room-card__code">
-                <div>
-                  <small>Invite code</small>
-                  <strong>{room.invite_code}</strong>
-                </div>
-                <button
-                  type="button"
-                  className="btn-copy"
-                  onClick={() => copyCode(room)}
-                  aria-label={`Copy invite code for ${room.name}`}
-                >
-                  {copiedId === room.id ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <button type="button" className="link-button" onClick={logout}>
-        Log out
-      </button>
-
-      {deleting ? (
-        <form className="danger" onSubmit={confirmDelete} noValidate>
-          <strong>Delete your account?</strong>
-          <p>
-            This permanently removes your profile, your focus history and your
-            streak. Rooms you own pass to the member who joined first; if
-            you're the only member, the room is deleted. This cannot be undone.
-          </p>
-          <input
-            type="password"
-            aria-label="Your password"
-            placeholder="Your password"
-            value={deletePw}
-            onChange={(e) => setDeletePw(e.target.value)}
-            autoComplete="current-password"
-          />
-          {deleteError && (
-            <div className="error-box" role="alert">
-              {deleteError}
-            </div>
-          )}
-          <div className="danger__row">
-            <button
-              type="button"
-              className="btn-outline"
-              onClick={cancelDelete}
-              disabled={deleteBusy}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn-danger" disabled={deleteBusy}>
-              {deleteBusy ? "Deleting..." : "Delete forever"}
-            </button>
-          </div>
+      <Sheet open={join} onClose={() => setJoin(false)}>
+        <form onSubmit={submitJoin}>
+          <h2 className="dot">Join a room</h2>
+          <Field label="Invite code" required maxLength={16} autoCapitalize="characters" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="K7QX2M" />
+          <ErrorLine text={error} />
+          <div style={{ height: 28 }} />
+          <Pill type="submit" disabled={busy || !code.trim()}>Join</Pill>
         </form>
-      ) : (
-        <button
-          type="button"
-          className="link-button link-button--quiet"
-          onClick={() => setDeleting(true)}
-        >
-          Delete account
-        </button>
-      )}
-    </main>
+      </Sheet>
+    </>
   );
 }

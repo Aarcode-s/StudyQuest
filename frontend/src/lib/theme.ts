@@ -3,8 +3,8 @@ export type ThemeResolved = "light" | "dark";
 
 const KEY = "sq_theme";
 const BROWSER_COLOR: Record<ThemeResolved, string> = {
-  dark: "#0A0A0A",
-  light: "#FFF6EC",
+  dark: "#000000",
+  light: "#EEEEED",
 };
 
 export function getThemePref(): ThemePref {
@@ -12,9 +12,9 @@ export function getThemePref(): ThemePref {
     const v = localStorage.getItem(KEY);
     if (v === "light" || v === "dark" || v === "system") return v;
   } catch {
-    /* storage unavailable: fall through to the default */
+    /* storage unavailable */
   }
-  return "system";
+  return "dark";
 }
 
 export function resolveTheme(pref: ThemePref): ThemeResolved {
@@ -24,7 +24,6 @@ export function resolveTheme(pref: ThemePref): ThemeResolved {
     : "dark";
 }
 
-/** Colours the phone's status bar / browser toolbar. */
 export function setBrowserThemeColor(color: string) {
   document
     .querySelector('meta[name="theme-color"]')
@@ -41,12 +40,11 @@ export function setThemePref(pref: ThemePref) {
   try {
     localStorage.setItem(KEY, pref);
   } catch {
-    /* ignore: the choice just won't be remembered */
+    /* ignore */
   }
   applyTheme(pref);
 }
 
-/** Call once at startup. Also follows the phone's setting while on "system". */
 export function initTheme() {
   applyTheme(getThemePref());
   window

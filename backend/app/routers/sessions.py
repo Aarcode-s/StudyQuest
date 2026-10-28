@@ -5,8 +5,10 @@ from fastapi import APIRouter, HTTPException, Query, Request, status
 from app.core.rate_limit import limiter
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
-from app.schemas.session import SessionRead
+from app.schemas.insights import Insights, WeekReview
+from app.schemas.session import PauseRequest, SessionRead, SessionUpdate, StartRequest
 from app.schemas.stats import DailyStats
+from app.services import insights as insights_service
 from app.services import sessions as svc
 from app.services import stats as stats_service
 from app.services.rooms import NotAMemberError
@@ -23,9 +25,15 @@ _NOT_FOUND = HTTPException(status.HTTP_404_NOT_FOUND, detail="Not found")
     summary="Start a focus session in a room",
 )
 @limiter.limit("30/minute")
-def start(request: Request, room_id: int, user: CurrentUser, db: DbSession):
+def start(
+    request: Request,
+    room_id: int,
+    user: CurrentUser,
+    db: DbSession,
+    data: StartRequest | None = None,
+):
     try:
-        return svc.start_session(db, user.id, room_id)
+        return svc.start_session(db, user.id, room_id, data.tag if data else None)
     except NotAMemberError:
         raise _NOT_FOUND
     except svc.ActiveSessionExistsError:
@@ -60,8 +68,16 @@ def _transition(fn, db, user, session_id):
     response_model=SessionRead,
     summary="Pause (start a break)",
 )
-def pause(session_id: int, user: CurrentUser, db: DbSession):
-    return _transition(svc.pause_session, db, user, session_id)
+def pause(
+    session_id: int,
+    user: CurrentUser,
+    db: DbSession,
+    data: PauseRequest | None = None,
+):
+    reason = data.reason if data else "manual"
+    return _transition(
+        lambda d, uid, sid: svc.pause_session(d, uid, sid, reason), db, user, session_id
+    )
 
 
 @router.post(
@@ -104,3 +120,42 @@ def daily_stats(
     days: Annotated[int, Query(ge=7, le=400)] = 365,
 ):
     return stats_service.get_daily_stats(db, user.id, days)
+
+
+@router.patch(
+    "/sessions/{session_id}",
+    response_model=SessionRead,
+    summary="Set the tag and/or focus rating of one of your sessions",
+)
+def update_session(
+    session_id: int, data: SessionUpdate, user: CurrentUser, db: DbSession
+):
+    fields = {k: getattr(data, k) for k in data.model_fields_set}
+    try:
+        return svc.update_session(db, user.id, session_id, fields)
+    except svc.SessionNotFoundError:
+        raise _NOT_FOUND
+
+
+@router.get(
+    "/stats/insights",
+    response_model=Insights,
+    tags=["stats"],
+    summary="When you study best, your breaks, and anonymous room averages",
+)
+def insights(user: CurrentUser, db: DbSession):
+    return insights_service.get_insights(db, user.id)
+
+
+@router.get(
+    "/stats/review",
+    response_model=WeekReview,
+    tags=["stats"],
+    summary="Weekly review (Monday to Sunday, India time)",
+)
+def review(
+    user: CurrentUser,
+    db: DbSession,
+    weeks_ago: Annotated[int, Query(ge=0, le=52)] = 0,
+):
+    return insights_service.get_review(db, user.id, weeks_ago)
