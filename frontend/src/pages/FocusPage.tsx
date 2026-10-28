@@ -8,6 +8,7 @@ import TagChips from "../components/TagChips";
 import { ErrorLine, Pill, RoundBtn, Sheet } from "../components/ui";
 import { useFetch } from "../hooks/useFetch";
 import { api } from "../lib/api";
+import { enterDock } from "../lib/dock";
 import { formatClock, formatMinutes, percent } from "../lib/format";
 import { setPrefs, usePrefs } from "../lib/prefs";
 import type { DailyStats, MemberStatus, Room, Session } from "../lib/types";
@@ -225,7 +226,10 @@ export default function FocusPage() {
               <Pill icon="play" onClick={() => void t.resume()} disabled={t.busy}>Start</Pill>
             )}
             <RoundBtn icon="stop" label="Finish session" onClick={onStop} disabled={t.busy} />
-            <RoundBtn icon="dock" label="Dock mode" onClick={() => navigate("/dock")} />
+            <RoundBtn icon="dock" label="Dock mode" onClick={() => {
+                void enterDock();
+                navigate("/dock");
+              }} />
           </>
         )}
       </div>

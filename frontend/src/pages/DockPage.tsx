@@ -5,6 +5,7 @@ import { RoundBtn } from "../components/ui";
 import { useFetch } from "../hooks/useFetch";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { formatClock } from "../lib/format";
+import { enterDock, exitDock } from "../lib/dock";
 import { applyTheme, getThemePref, setBrowserThemeColor } from "../lib/theme";
 import type { Room } from "../lib/types";
 import { useSession } from "../session/useSession";
@@ -38,14 +39,22 @@ export default function DockPage() {
     const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
-    try {
-      screen.orientation?.unlock?.(); // allow rotation again if something locked it
-    } catch {
-      /* not supported */
-    }
+    void enterDock(); // works when the tap that opened the dock is still fresh
+    const onFs = () => {
+      if (!document.fullscreenElement) {
+        try {
+          screen.orientation?.unlock?.();
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    document.addEventListener("fullscreenchange", onFs);
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      document.removeEventListener("fullscreenchange", onFs);
+      void exitDock();
     };
   }, []);
 
@@ -55,12 +64,8 @@ export default function DockPage() {
     timer.current = window.setTimeout(() => setControls(false), CONTROLS_MS);
   }
   async function toggleFs() {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen();
-    } catch {
-      /* not supported */
-    }
+    if (document.fullscreenElement) await exitDock();
+    else await enterDock();
   }
 
   const room = rooms.data?.find((r) => r.id === t.session?.room_id);
