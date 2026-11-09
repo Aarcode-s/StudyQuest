@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { DotText } from "../components/Dots";
 import Figure from "../components/Figure";
 import Icon from "../components/Icon";
 import DurationInput, { clampMinutes } from "../components/DurationInput";
@@ -160,8 +159,8 @@ export default function RoomPage() {
         <>
           {r && (
             <div className="rinfo">
-              <div><span className="mono muted">MINIMUM</span><b className="dot">{r.min_daily_minutes}m / day</b></div>
-              <div><span className="mono muted">SHOWED UP</span><b className="dot">{showed} / {r.member_count}</b></div>
+              <div><span className="mono muted">MINIMUM</span><b className="stat-val" style={{ fontSize: 18 }}>{r.min_daily_minutes}m / day</b></div>
+              <div><span className="mono muted">SHOWED UP</span><b className="stat-val" style={{ fontSize: 18 }}>{showed} / {r.member_count}</b></div>
             </div>
           )}
           {members.map((m) => (
@@ -172,7 +171,9 @@ export default function RoomPage() {
                 {stateView(m)}
               </div>
               <div className="mt">
-                <DotText size={21}>{m.state === "idle" || m.hidden ? "—" : formatClock(m.elapsed_seconds)}</DotText>
+                <span className="stat-val" style={{ fontSize: 17 }}>
+                  {m.state === "idle" || m.hidden ? "—" : formatClock(m.elapsed_seconds)}
+                </span>
                 <span className="mono muted">{formatTotal(m.today_seconds)} today</span>
               </div>
             </div>
@@ -205,7 +206,7 @@ export default function RoomPage() {
             const w = m.hidden ? 0 : (m.today_seconds / lead) * 100;
             return (
               <button type="button" className="rk" key={m.user_id} onClick={() => setPicked(m)}>
-                <span className="dot rkn">{i + 1}</span>
+                <span className="stat-val rkn">{i + 1}</span>
                 <div className="rkm">
                   <div className="rkt">
                     <b>{m.username}{me ? " (you)" : ""}</b>
@@ -270,7 +271,7 @@ export default function RoomPage() {
               ) : (
                 <>
                   <div className="mono muted">PERSONAL DAILY GOAL</div>
-                  <div style={{ margin: "14px 0" }}><DotText size={54}>{`${pc}%`}</DotText></div>
+                  <div style={{ margin: "14px 0" }}><span className="stat-val" style={{ fontSize: 44 }}>{`${pc}%`}</span></div>
                   <div className="bar"><u style={{ width: `${pc}%` }} /></div>
                   <p className="mono muted" style={{ marginTop: 14 }}>
                     {formatTotal(picked.today_seconds)} of {formatMinutes(picked.daily_goal_minutes)} today

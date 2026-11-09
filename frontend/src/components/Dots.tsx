@@ -342,20 +342,26 @@ export function HourStrip({ hours, peak }: { hours: number[]; peak: number[] }) 
       <div className="hs">
         {hours.map((v, h) => {
           const level = v <= 0 ? 0 : Math.max(1, Math.round((v / max) * 6));
+          const hourLabel = `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "AM" : "PM"}`;
+          const isPeak = peak.includes(h);
           return (
-            <div className="hc" key={h}>
+            <div
+              className="hc"
+              key={h}
+              title={`${hourLabel}: ${Math.round(v / 60)} min${isPeak ? " (Peak)" : ""}`}
+            >
               {Array.from({ length: 6 }, (_, r) => (
-                <i key={r} className={`${5 - r < level ? "on" : ""} ${peak.includes(h) ? "pk" : ""}`} />
+                <i key={r} className={`${5 - r < level ? "on" : ""} ${isPeak ? "pk" : ""}`} />
               ))}
             </div>
           );
         })}
       </div>
       <div className="hl mono muted">
-        <span>12A</span>
-        <span>6A</span>
-        <span>12P</span>
-        <span>6P</span>
+        <span>12 AM</span>
+        <span>6 AM</span>
+        <span>12 PM</span>
+        <span>6 PM</span>
       </div>
     </>
   );

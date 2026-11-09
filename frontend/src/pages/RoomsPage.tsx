@@ -19,7 +19,7 @@ function RoomCard({ room, onOpen }: { room: Room; onOpen: () => void }) {
   return (
     <button className="rc" onClick={onOpen}>
       <div className="rct">
-        <div className="rav dot">{room.name.slice(0, 1).toUpperCase()}</div>
+        <div className="rav">{room.name.slice(0, 1).toUpperCase()}</div>
         <div className="rcm">
           <b>{room.name}</b>
           <span className="mono muted">

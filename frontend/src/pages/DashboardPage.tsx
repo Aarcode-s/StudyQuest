@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import {
   DayDisc,
-  DotText,
   HourStrip,
   MonthDisc,
   TrendChart,
@@ -36,7 +35,7 @@ function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div className="tile">
       <span className="mono muted">{label}</span>
-      <DotText size={19}>{value}</DotText>
+      <span className="stat-val" style={{ fontSize: 18 }}>{value}</span>
     </div>
   );
 }
@@ -155,8 +154,8 @@ function Overview({ stats }: { stats: DailyStats }) {
           <button className="discw" onClick={() => setFlipped(true)} aria-label="Show the trend">
             {disc}
             <div className="dcen">
-              <DotText size={period === "month" ? 38 : 54}>{`${centerPct}%`}</DotText>
-              <div className="mono muted" style={{ fontSize: 9.5 }}>{centerSub}</div>
+              <span className="stat-val" style={{ fontSize: period === "month" ? 34 : 46 }}>{`${centerPct}%`}</span>
+              <div className="mono muted" style={{ fontSize: 10 }}>{centerSub}</div>
             </div>
           </button>
           <div className="mono muted c" style={{ marginTop: 6 }}>Tap the circle for trend</div>
@@ -195,6 +194,43 @@ function Overview({ stats }: { stats: DailyStats }) {
   );
 }
 
+function getPersona(peakHours: number[]) {
+  if (peakHours.length !== 2) {
+    return {
+      icon: "⏱",
+      title: "Discovering Rhythm",
+      sub: "Focus 3+ days to reveal your study persona",
+    };
+  }
+  const start = peakHours[0];
+  if (start >= 5 && start < 12) {
+    return {
+      icon: "🌅",
+      title: "Early Bird",
+      sub: "Your mind hits peak flow in the morning",
+    };
+  }
+  if (start >= 12 && start < 17) {
+    return {
+      icon: "☀️",
+      title: "Midday Achiever",
+      sub: "You build strong momentum through the afternoon",
+    };
+  }
+  if (start >= 17 && start < 22) {
+    return {
+      icon: "🌆",
+      title: "Evening Builder",
+      sub: "You focus deeply as the day winds down",
+    };
+  }
+  return {
+    icon: "🌙",
+    title: "Night Owl",
+    sub: "You thrive during quiet late night hours",
+  };
+}
+
 function InsightsView({ activeDays }: { activeDays: number }) {
   const { data, error, loading } = useFetch<Insights>("/stats/insights");
   if (loading) return <p className="mono muted c" style={{ marginTop: 40 }}>Loading…</p>;
@@ -207,50 +243,101 @@ function InsightsView({ activeDays }: { activeDays: number }) {
       </div>
     );
   }
-  const peak =
+  const persona = getPersona(enough ? data.peak_hours : []);
+  const peakRange =
     enough && data.peak_hours.length === 2
       ? `${formatHour(data.peak_hours[0])} – ${formatHour((data.peak_hours[1] + 1) % 24)}`
-      : "—";
+      : null;
   const you = data.breaks_per_hour;
   const room = data.room.breaks_per_hour;
   const maxB = Math.max(you ?? 0, room ?? 0, 0.1);
   return (
     <>
       <div className="gcard">
-        <div className="mono muted">When you study best</div>
-        <div className="dot" style={{ fontSize: 26, margin: "8px 0 18px" }}>{peak}</div>
+        <div className="mono muted" style={{ fontSize: 10 }}>WHEN YOU STUDY BEST</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "10px 0 16px" }}>
+          <span style={{ fontSize: 32 }} role="img" aria-label={persona.title}>{persona.icon}</span>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>{persona.title}</div>
+            <div className="muted2" style={{ fontSize: 12.5 }}>
+              {peakRange ? `Peak Focus: ${peakRange}` : persona.sub}
+            </div>
+          </div>
+        </div>
         <HourStrip hours={data.hours} peak={enough ? data.peak_hours : []} />
-        {!enough && <p className="mono muted" style={{ marginTop: 14, fontSize: 9.5 }}>Shows after 3 days of focus</p>}
+        {!enough && <p className="mono muted" style={{ marginTop: 14, fontSize: 10 }}>Personalized insights appear after 3 active days</p>}
       </div>
+
       <div className="tiles2">
-        <div className="tile"><span className="mono muted">AVG SESSION</span><span className="dot">{formatTotal(data.avg_session_seconds)}</span></div>
-        <div className="tile"><span className="mono muted">LONGEST</span><span className="dot">{formatTotal(data.longest_session_seconds)}</span></div>
+        <div className="tile">
+          <span className="mono muted">AVG SESSION</span>
+          <span className="stat-val">{formatTotal(data.avg_session_seconds)}</span>
+        </div>
+        <div className="tile">
+          <span className="mono muted">LONGEST</span>
+          <span className="stat-val">{formatTotal(data.longest_session_seconds)}</span>
+        </div>
       </div>
+
       <div className="gcard">
-        <div className="mono muted">Breaks per hour</div>
-        <div className="cmp">
+        <div className="mono muted" style={{ marginBottom: 14, fontSize: 10 }}>FOCUS QUALITY & FLOW</div>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+          <div style={{ background: "var(--card2)", borderRadius: "var(--radius-md)", padding: "12px 14px", border: "1px solid var(--line)" }}>
+            <span className="mono muted" style={{ fontSize: 9.5 }}>AVG RATING</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginTop: 4 }}>
+              <span style={{ color: "var(--red)", fontSize: 15 }}>★</span>
+              <span className="stat-val" style={{ fontSize: 20 }}>
+                {data.avg_rating !== null ? `${data.avg_rating}` : "—"}
+              </span>
+              <span className="muted2" style={{ fontSize: 12 }}>/ 5</span>
+            </div>
+          </div>
+          
+          <div style={{ background: "var(--card2)", borderRadius: "var(--radius-md)", padding: "12px 14px", border: "1px solid var(--line)" }}>
+            <span className="mono muted" style={{ fontSize: 9.5 }}>FOCUS : BREAK</span>
+            <div style={{ marginTop: 4 }}>
+              <span className="stat-val" style={{ fontSize: 20 }}>
+                {data.focus_break_ratio !== null ? `${data.focus_break_ratio}:1` : "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mono muted" style={{ margin: "14px 0 8px", fontSize: 10 }}>BREAKS PER HOUR</div>
+        <div className="cmp" style={{ marginTop: 8 }}>
           <div>
             <span className="mono">YOU</span>
             <div className="bar"><u style={{ width: `${((you ?? 0) / maxB) * 100}%` }} /></div>
-            <b className="dot">{you ?? "—"}</b>
+            <b className="stat-val" style={{ fontSize: 15 }}>{you !== null ? `${you}/h` : "—"}</b>
           </div>
           <div>
             <span className="mono muted">ROOM</span>
             <div className="bar g"><u style={{ width: `${((room ?? 0) / maxB) * 100}%` }} /></div>
-            <b className="dot muted">{room ?? "—"}</b>
+            <b className="stat-val muted" style={{ fontSize: 15 }}>{room !== null ? `${room}/h` : "—"}</b>
           </div>
         </div>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+          <span className="ch" style={{ cursor: "default", fontSize: 11.5, padding: "6px 12px" }}>
+            Left app {data.left_app_count}×
+          </span>
+          {enough && data.best_weekday !== null && (
+            <span className="ch" style={{ cursor: "default", fontSize: 11.5, padding: "6px 12px" }}>
+              Best day: {WEEKDAY_SHORT[data.best_weekday]}
+            </span>
+          )}
+          {you !== null && room !== null && room > 0 && you < room && (
+            <span className="ch" style={{ cursor: "default", fontSize: 11.5, padding: "6px 12px", borderColor: "var(--red)", color: "var(--red)" }}>
+              ⚡ {Math.round(((room - you) / room) * 100)}% fewer breaks than room
+            </span>
+          )}
+        </div>
         {room === null && (
-          <p className="mono muted" style={{ marginTop: 16, fontSize: 9.5 }}>
+          <p className="mono muted" style={{ marginTop: 14, fontSize: 10 }}>
             Room average appears when 2+ other members share their stats
           </p>
         )}
-      </div>
-      <div className="tiles2">
-        <div className="tile"><span className="mono muted">LEFT THE APP</span><span className="dot">{data.left_app_count}×</span></div>
-        <div className="tile"><span className="mono muted">BEST DAY</span><span className="dot">{!enough || data.best_weekday === null ? "—" : WEEKDAY_SHORT[data.best_weekday]}</span></div>
-        <div className="tile"><span className="mono muted">FOCUS : BREAK</span><span className="dot">{data.focus_break_ratio === null ? "—" : `${data.focus_break_ratio}:1`}</span></div>
-        <div className="tile"><span className="mono muted">AVG FOCUS</span><span className="dot">{data.avg_rating === null ? "—" : `${data.avg_rating}/5`}</span></div>
       </div>
     </>
   );

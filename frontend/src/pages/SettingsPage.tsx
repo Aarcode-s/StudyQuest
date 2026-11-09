@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { DotText } from "../components/Dots";
 import Figure from "../components/Figure";
 import Icon from "../components/Icon";
 import DurationInput, { clampMinutes } from "../components/DurationInput";
@@ -114,7 +113,7 @@ export default function SettingsPage() {
         {GOALS.map((g) => (
           <button className="gr" key={g.key} onClick={() => { setError(null); setCustom(user[g.key]); setGoal(g.key); }}>
             <span className="mono muted">{g.label}</span>
-            <DotText size={24}>{formatMinutes(user[g.key])}</DotText>
+            <span className="stat-val" style={{ fontSize: 18 }}>{formatMinutes(user[g.key])}</span>
           </button>
         ))}
       </div>

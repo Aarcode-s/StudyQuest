@@ -183,11 +183,11 @@ export default function ReviewPage() {
               ))}
             </div>
             <div className="rvt">
-              <div><span className="mono muted">ACTIVE DAYS</span><span className="dot">{data.active_days} / 7</span></div>
-              <div><span className="mono muted">SESSIONS</span><span className="dot">{data.sessions}</span></div>
-              <div><span className="mono muted">BEST DAY</span><span className="dot">{data.best_day === null ? "—" : WEEKDAY_SHORT[data.best_day]}</span></div>
+              <div><span className="mono muted">ACTIVE DAYS</span><span className="stat-val">{data.active_days} / 7</span></div>
+              <div><span className="mono muted">SESSIONS</span><span className="stat-val">{data.sessions}</span></div>
+              <div><span className="mono muted">BEST DAY</span><span className="stat-val">{data.best_day === null ? "—" : WEEKDAY_SHORT[data.best_day]}</span></div>
             </div>
-            <div className="rvf"><Logo size={26} fg="var(--text)" /><span className="dot">studyquest</span></div>
+            <div className="rvf"><Logo size={26} fg="var(--text)" /><span style={{ fontFamily: "Poppins, sans-serif", fontWeight: 700 }}>studyquest</span></div>
           </div>
           <Pill icon="share" onClick={share}>Share as image</Pill>
           {msg && <p className="okline c">{msg}</p>}

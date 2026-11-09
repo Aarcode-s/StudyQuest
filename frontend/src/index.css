@@ -19,6 +19,15 @@ button:disabled { opacity: 0.4; cursor: default; }
 /* Doto is strictly reserved for clock numerals, countdowns, and hero stats */
 .dot { font-family: "Doto", monospace; font-weight: 900; }
 
+/* Readable modern tabular numbers for all metrics, ratios, counters, and statistics */
+.stat-val {
+  font-family: "Poppins", system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 /* All headings, titles, dialog headers, usernames, and branding use modern clean Poppins */
 h1, h2, h3, .ht, .sheet h2, .brand b, .prof b, .rcm b, .mm b, .hero .wm {
   font-family: "Poppins", "Space Grotesk", sans-serif !important;
