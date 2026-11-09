@@ -283,10 +283,22 @@ export function TrendChart({
   const step = n > 12 ? Math.ceil(n / 6) : 1;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="trendsvg" aria-hidden="true">
+      <defs>
+        <linearGradient id="trend-area-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--red)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--red)" stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
       {Array.from({ length: 21 }, (_, i) =>
         Array.from({ length: 7 }, (_, j) => (
           <circle key={`${i}-${j}`} cx={px + (i * (W - 2 * px)) / 20} cy={py + (j * (H - 26 - py)) / 6} r={1.1} fill="var(--dot-off)" />
         )),
+      )}
+      {real.length > 1 && (
+        <polygon
+          points={`${X(real[0].i)},${H - 26} ${real.map((p) => `${X(p.i)},${Y(p.v)}`).join(" ")} ${X(real[real.length - 1].i)},${H - 26}`}
+          fill="url(#trend-area-grad)"
+        />
       )}
       <line x1={px} x2={W - px} y1={gy} y2={gy} stroke="var(--red)" strokeWidth={1.5} strokeDasharray="3 5" />
       <text x={W - px} y={gy - 7} textAnchor="end" fontFamily="Space Mono, monospace" fontSize="9.5" fill="var(--red)">
