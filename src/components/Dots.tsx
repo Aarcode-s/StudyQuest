@@ -1,0 +1,266 @@
+const PI = Math.PI;
+
+/** Clock and stat text in the retro display font. */
+export function DotText({
+  children,
+  size,
+  className = "",
+}: {
+  children: string;
+  size: number;
+  className?: string;
+}) {
+  return (
+    <span className={`dot ${className}`} style={{ fontSize: size, lineHeight: 1 }}>
+      {children}
+    </span>
+  );
+}
+
+function pos(i: number, n: number, r: number): [number, number] {
+  const a = -PI / 2 + (2 * PI * i) / n;
+  return [150 + r * Math.cos(a), 150 + r * Math.sin(a)];
+}
+
+// ---------------------------------------------------------------- big ring clock
+/** A thick single-colour ring with thin outlines, like an old gauge. */
+export function RingClock({ frac }: { frac: number }) {
+  const f = Math.min(1, Math.max(0, frac));
+  const r = 128;
+  const L = 2 * PI * r;
+  return (
+    <svg viewBox="0 0 300 300" className="ringsvg" aria-hidden="true">
+      <circle cx="150" cy="150" r={r} fill="none" stroke="var(--dot-off)" strokeWidth="26" />
+      {f > 0 && (
+        <circle
+          cx="150"
+          cy="150"
+          r={r}
+          fill="none"
+          stroke="var(--red)"
+          strokeWidth="26"
+          strokeLinecap="round"
+          strokeDasharray={`${L * f} ${L}`}
+          transform="rotate(-90 150 150)"
+        />
+      )}
+      <circle cx="150" cy="150" r={r + 13} fill="none" stroke="var(--outline)" strokeWidth="2" />
+      <circle cx="150" cy="150" r={r - 13} fill="none" stroke="var(--outline)" strokeWidth="2" />
+    </svg>
+  );
+}
+
+export function Arc({ frac, size = 108 }: { frac: number; size?: number }) {
+  const r = 44;
+  const L = 2 * PI * r;
+  const f = Math.min(1, Math.max(0, frac));
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--dot-off)" strokeWidth="4" />
+      <circle
+        cx="50"
+        cy="50"
+        r={r}
+        fill="none"
+        stroke="var(--red)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeDasharray={`${L * f} ${L}`}
+        transform="rotate(-90 50 50)"
+      />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------- dashboard discs
+export function DayDisc({ frac }: { frac: number }) {
+  const n = 60;
+  const lit = Math.round(n * Math.min(1, Math.max(0, frac)));
+  return (
+    <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => {
+        const [x, y] = pos(i, n, 84);
+        return (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={i < lit ? 4 : 2.6}
+            fill={i < lit ? "var(--red)" : "var(--dot-off2)"}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+/** values: fraction of the daily goal for each day, null = not yet. */
+export function WeekDisc({ values }: { values: (number | null)[] }) {
+  return (
+    <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
+      {values.map((v, i) => {
+        const [x, y] = pos(i, 7, 84);
+        const [lx, ly] = pos(i, 7, 122);
+        return (
+          <g key={i}>
+            {v === null ? (
+              <circle cx={x} cy={y} r={8} fill="none" stroke="var(--dot-off2)" strokeWidth={1.5} strokeDasharray="2 3" />
+            ) : v <= 0 ? (
+              <circle cx={x} cy={y} r={8} fill="none" stroke="var(--dot-off2)" strokeWidth={2} />
+            ) : (
+              <circle cx={x} cy={y} r={5 + 5 * Math.min(v, 1)} fill="var(--red)" opacity={0.35 + 0.65 * Math.min(v, 1)} />
+            )}
+            <text x={lx} y={ly + 3} textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="10" fill="var(--muted)">
+              {"MTWTFSS"[i]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export function MonthDisc({
+  values,
+  today,
+}: {
+  values: (number | null)[];
+  today: number;
+}) {
+  const n = values.length;
+  return (
+    <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
+      {values.map((v, i) => {
+        const [x, y] = pos(i, n, 84);
+        const k = Math.min(1, v ?? 0);
+        return (
+          <g key={i}>
+            {v === null ? (
+              <circle cx={x} cy={y} r={2.2} fill="var(--dot-off2)" opacity={0.6} />
+            ) : v <= 0 ? (
+              <circle cx={x} cy={y} r={3.2} fill="var(--dot-off2)" />
+            ) : (
+              <circle cx={x} cy={y} r={3.6 + 3 * k} fill="var(--red)" opacity={0.3 + 0.7 * k} />
+            )}
+            {i === today && (
+              <circle cx={x} cy={y} r={10.5} fill="none" stroke="var(--text)" strokeWidth={1.6} />
+            )}
+          </g>
+        );
+      })}
+      <text x="150" y="40" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--muted)">1</text>
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------- trend chart
+export function TrendChart({
+  values,
+  goal,
+  labels,
+  goalLabel,
+}: {
+  values: (number | null)[];
+  goal: number;
+  labels: string[];
+  goalLabel: string;
+}) {
+  const W = 318;
+  const H = 210;
+  const px = 14;
+  const py = 16;
+  const n = values.length;
+  const nums = values.filter((v): v is number => v !== null);
+  const mx = Math.max(goal, ...nums, 1) * 1.1;
+  const X = (i: number) => px + (n === 1 ? 0 : (i * (W - 2 * px)) / (n - 1));
+  const Y = (v: number) => H - 26 - (v / mx) * (H - 26 - py);
+  const real = values.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v !== null);
+  const hi = real.length ? real.reduce((a, b) => (b.v > a.v ? b : a)).i : -1;
+  const lo = real.length > 1 ? real.reduce((a, b) => (b.v < a.v ? b : a)).i : -1;
+  const gy = Y(goal);
+  const step = n > 12 ? Math.ceil(n / 6) : 1;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="trendsvg" aria-hidden="true">
+      <defs>
+        <linearGradient id="trend-area-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--red)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--red)" stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      {Array.from({ length: 21 }, (_, i) =>
+        Array.from({ length: 7 }, (_, j) => (
+          <circle key={`${i}-${j}`} cx={px + (i * (W - 2 * px)) / 20} cy={py + (j * (H - 26 - py)) / 6} r={1.1} fill="var(--dot-off)" />
+        )),
+      )}
+      {real.length > 1 && (
+        <polygon
+          points={`${X(real[0].i)},${H - 26} ${real.map((p) => `${X(p.i)},${Y(p.v)}`).join(" ")} ${X(real[real.length - 1].i)},${H - 26}`}
+          fill="url(#trend-area-grad)"
+        />
+      )}
+      <line x1={px} x2={W - px} y1={gy} y2={gy} stroke="var(--red)" strokeWidth={1.5} strokeDasharray="3 5" />
+      <text x={W - px} y={gy - 7} textAnchor="end" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--red)">
+        {goalLabel}
+      </text>
+      <polyline
+        points={real.map((p) => `${X(p.i)},${Y(p.v)}`).join(" ")}
+        fill="none"
+        stroke="var(--text)"
+        strokeWidth={2.2}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {real.map((p) => (
+        <circle
+          key={p.i}
+          cx={X(p.i)}
+          cy={Y(p.v)}
+          r={p.i === hi || p.i === lo ? 5.2 : n > 12 ? 2.2 : 3.4}
+          fill={p.i === hi ? "var(--red)" : "var(--bg)"}
+          stroke={p.i === hi ? "var(--red)" : "var(--text)"}
+          strokeWidth={2}
+        />
+      ))}
+      {labels.map((l, i) =>
+        i % step === 0 ? (
+          <text key={i} x={X(i)} y={H - 6} textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--muted)">
+            {l}
+          </text>
+        ) : null,
+      )}
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------- hours strip
+export function HourStrip({ hours, peak }: { hours: number[]; peak: number[] }) {
+  const max = Math.max(...hours, 1);
+  return (
+    <>
+      <div className="hs">
+        {hours.map((v, h) => {
+          const level = v <= 0 ? 0 : Math.max(1, Math.round((v / max) * 6));
+          const hourLabel = `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "AM" : "PM"}`;
+          const isPeak = peak.includes(h);
+          return (
+            <div
+              className="hc"
+              key={h}
+              title={`${hourLabel}: ${Math.round(v / 60)} min${isPeak ? " (Peak)" : ""}`}
+            >
+              {Array.from({ length: 6 }, (_, r) => (
+                <i key={r} className={`${5 - r < level ? "on" : ""} ${isPeak ? "pk" : ""}`} />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      <div className="hl mono muted">
+        <span>12 AM</span>
+        <span>6 AM</span>
+        <span>12 PM</span>
+        <span>6 PM</span>
+      </div>
+    </>
+  );
+}

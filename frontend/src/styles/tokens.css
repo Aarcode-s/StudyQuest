@@ -1,54 +1,68 @@
+/* 70s retro: "light" is warm cream, "dark" is dark brown.
+   The accent is still called --red so existing code keeps working. */
 :root,
-:root[data-theme="dark"] {
-  --bg: #09090b;
-  --card: #131316;
-  --card-hover: #18181c;
-  --card2: #1b1b1f;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --text: #f4f4f5;
-  --text-dim: #a1a1aa;
-  --muted: #71717a;
-  --dot-off: #27272a;
-  --dot-off2: #3f3f46;
-  --red: #ff3b36;
-  --red-dim: rgba(255, 59, 54, 0.14);
-  --btn: #f4f4f5;
-  --btnt: #09090b;
-  --shadow: rgba(0, 0, 0, 0.5);
-  --glass-bg: rgba(19, 19, 22, 0.76);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
-  --radius-pill: 9999px;
-  color-scheme: dark;
-}
-
 :root[data-theme="light"] {
-  --bg: #f8f8f7;
-  --card: #ffffff;
-  --card-hover: #fcfcfb;
-  --card2: #f1f1ef;
-  --line: rgba(0, 0, 0, 0.07);
-  --line-strong: rgba(0, 0, 0, 0.14);
-  --text: #111113;
-  --text-dim: #52525b;
-  --muted: #8e8e93;
-  --dot-off: #e4e4e1;
-  --dot-off2: #d1d1cd;
-  --red: #e0202a;
-  --red-dim: rgba(224, 32, 42, 0.08);
-  --btn: #111113;
-  --btnt: #ffffff;
-  --shadow: rgba(0, 0, 0, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(0, 0, 0, 0.07);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --bg: #f4e8cf;
+  --card: #fbf3de;
+  --card-hover: #fff8e8;
+  --card2: #eadbb8;
+  --line: rgba(59, 42, 30, 0.18);
+  --line-strong: rgba(59, 42, 30, 0.4);
+  --text: #3b2a1e;
+  --text-dim: #5a4433;
+  --muted: #6b5443;
+  --dot-off: #e0cfa8;
+  --dot-off2: #c9b58e;
+  --red: #b9431b;
+  --red-dim: rgba(185, 67, 27, 0.12);
+  --on-accent: #fff7e6;
+  --btn: #3b2a1e;
+  --btnt: #f4e8cf;
+  --mustard: #ebb52e;
+  --on-mustard: #3b2a1e;
+  --teal: #2f7f79;
+  --outline: #3b2a1e;
+  --hard: #3b2a1e;
+  --shadow: rgba(59, 42, 30, 0.18);
+  --glass-bg: #fbf3de;
+  --glass-border: #3b2a1e;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
   --radius-pill: 9999px;
   color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #1f1610;
+  --card: #2a1e15;
+  --card-hover: #33261b;
+  --card2: #3b2c1f;
+  --line: rgba(244, 232, 207, 0.16);
+  --line-strong: rgba(244, 232, 207, 0.34);
+  --text: #f4e8cf;
+  --text-dim: #cdb98f;
+  --muted: #a8926f;
+  --dot-off: #3a2c20;
+  --dot-off2: #54432f;
+  --red: #e2772e;
+  --red-dim: rgba(226, 119, 46, 0.16);
+  --on-accent: #1f1610;
+  --btn: #ebb52e;
+  --btnt: #1f1610;
+  --mustard: #ebb52e;
+  --on-mustard: #1f1610;
+  --teal: #4fb3ab;
+  --outline: #6e563b;
+  --hard: #0e0905;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --glass-bg: #2a1e15;
+  --glass-border: #6e563b;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+  --radius-pill: 9999px;
+  color-scheme: dark;
 }

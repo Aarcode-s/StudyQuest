@@ -1,0 +1,122 @@
+/* 70s retro overrides. Imported after index.css (see main.tsx).
+   Delete this file and its import to go back to the old look. */
+
+:root {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+}
+
+body { font-family: var(--font-body); }
+
+/* ------------------------------------------------------------ type */
+.dot,
+h1, h2, h3, .ht, .sheet h2, .brand b, .prof b, .rcm b, .mm b, .hero .wm {
+  font-family: var(--font-display) !important;
+}
+.dot {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.stat-val { font-family: var(--font-body); font-weight: 700; }
+.mono, .lv, .st { font-family: var(--font-body); font-weight: 700; letter-spacing: 0.04em; }
+.muted2 { color: var(--text-dim); }
+
+/* ------------------------------------------------------------ cards: one clear outline, no soft shadows */
+.card2, .gcard, .rv, .rc, .racec, .mat, .tile, .mr, .rk, .rinfo > div, .who, .roompill, .chip2,
+.field, .notice, .fc, .pf, .fa, .rav {
+  border: 2px solid var(--outline);
+  box-shadow: none;
+}
+.rc:hover, .card2.link:hover, .rk:hover { transform: none; background: var(--card-hover); border-color: var(--outline); }
+.tile:hover { border-color: var(--outline); }
+.fc.on { border-color: var(--red); }
+.field:focus { border-color: var(--red); box-shadow: 0 0 0 2px var(--red); }
+.rc, .card2 { box-shadow: 0 4px 0 var(--hard); }
+.card2.link, .card2.list { box-shadow: none; }
+
+/* ------------------------------------------------------------ buttons */
+.pill { border-radius: var(--radius-pill); height: 58px; font-weight: 700; }
+.pill.solid {
+  background: var(--red);
+  color: var(--on-accent);
+  border: 3px solid var(--outline);
+  box-shadow: 0 5px 0 var(--hard);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+}
+.pill.solid:hover:not(:disabled) { filter: none; }
+.pill.solid:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--hard); }
+.pill.ghost { border: 2px solid var(--outline); background: var(--card); }
+.pill.ghost:hover:not(:disabled) { border-color: var(--outline); }
+.pill.danger { border: 2px solid var(--red); }
+.pill.danger:hover:not(:disabled) { background: var(--red); color: var(--on-accent); }
+
+.rb { border: 2px solid var(--outline); border-radius: var(--radius-pill); }
+.rb:hover:not(:disabled) { border-color: var(--outline); }
+.rb.sm { border-radius: var(--radius-pill); }
+
+.seg { border: 2px solid var(--outline); border-radius: var(--radius-pill); background: var(--card); }
+.seg button { border-radius: var(--radius-pill); font-weight: 700; color: var(--text); }
+.seg button.on { box-shadow: none; }
+.seg.tiny { border-radius: var(--radius-pill); }
+.seg.tiny button { border-radius: var(--radius-pill); }
+
+.ch { border: 2px solid var(--outline); color: var(--text); font-weight: 700; }
+.ch:hover { border-color: var(--outline); }
+.ch.on { box-shadow: none; }
+
+.tg { border: 2px solid var(--outline); }
+.tg.on i { background: var(--on-accent); }
+
+/* ------------------------------------------------------------ bottom nav */
+.nav {
+  background: var(--card);
+  border: 2px solid var(--outline);
+  box-shadow: 0 4px 0 var(--hard);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nv { color: var(--text); }
+.nv.on { background: var(--mustard); color: var(--on-mustard); box-shadow: none; }
+
+/* ------------------------------------------------------------ sheets */
+.scrim { background: rgba(31, 22, 16, 0.55); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sheet { border: 2px solid var(--outline); border-bottom: 0; box-shadow: none; }
+.grab { background: var(--outline); }
+
+/* ------------------------------------------------------------ focus screen */
+.orb { border: 2px solid var(--outline); box-shadow: 0 4px 0 var(--hard); background: var(--card); }
+.orb:hover { transform: none; }
+.status .tag { border: 2px solid var(--outline); color: var(--text); }
+.rd { border: 2px solid var(--outline); background: var(--card); }
+.rd.on { background: var(--red); box-shadow: none; }
+
+/* ------------------------------------------------------------ dashboard / rooms details */
+.bar { border: 2px solid var(--outline); background: var(--card); height: 14px; }
+.bar u { border-radius: 0; background: repeating-linear-gradient(90deg, var(--red) 0 12px, var(--mustard) 12px 24px, var(--teal) 24px 36px); }
+.bar.g u { background: var(--dot-off2); }
+.hc i.on { background: var(--teal); opacity: 1; }
+.hc i.on.pk { background: var(--red); box-shadow: none; }
+.wk7 i { background: var(--teal); border-radius: 10px 10px 4px 4px; }
+.sd.on { box-shadow: none; }
+.cx { border-radius: 8px; }
+.danger { border: 2px solid var(--red); }
+.flagl { border: 2px solid var(--outline); }
+.track::after { background: var(--outline); }
+
+/* ------------------------------------------------------------ dock mode: always dark brown, big mustard timer */
+.dockp { background: #1a120c; color: #f4e8cf; }
+.dkd { color: #ebb52e; }
+.dkd .dot { font-weight: 900; }
+.dk1 { color: #a8926f; }
+.dkh { color: #8c7a60; }
+.dkc {
+  background: #2a1e15;
+  border: 2px solid #6e563b;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.dkc .rb { background: transparent; border-color: transparent; color: #f4e8cf; }
+.dkc .rb:hover { background: rgba(244, 232, 207, 0.12); border-color: transparent; }

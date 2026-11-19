@@ -23,9 +23,9 @@ function rangeText(r: WeekReview): string {
 async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
   try {
     await Promise.all([
-      document.fonts.load('900 100px "Doto"'),
-      document.fonts.load('400 20px "Space Mono"'),
-      document.fonts.load('700 20px "Space Grotesk"'),
+      document.fonts.load('900 100px "Fraunces"'),
+      document.fonts.load('700 20px "DM Sans"'),
+      document.fonts.load('700 20px "DM Sans"'),
     ]);
   } catch {
     /* draw with fallback fonts */
@@ -37,11 +37,11 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
   c.height = H;
   const g = c.getContext("2d");
   if (!g) return null;
-  const bg = dark ? "#000000" : "#eeeeed";
-  const text = dark ? "#ffffff" : "#0b0b0b";
-  const muted = dark ? "#8a8a8a" : "#77777a";
-  const red = dark ? "#ff3b36" : "#e0202a";
-  const card = dark ? "#101010" : "#ffffff";
+  const bg = dark ? "#1f1610" : "#f4e8cf";
+  const text = dark ? "#f4e8cf" : "#3b2a1e";
+  const muted = dark ? "#a8926f" : "#6b5443";
+  const red = dark ? "#e2772e" : "#b9431b";
+  const card = dark ? "#2a1e15" : "#fbf3de";
   g.fillStyle = bg;
   g.fillRect(0, 0, W, H);
   g.fillStyle = card;
@@ -51,16 +51,16 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
 
   g.textBaseline = "alphabetic";
   g.fillStyle = muted;
-  g.font = '400 30px "Space Mono", monospace';
+  g.font = '400 30px "DM Sans", sans-serif';
   g.fillText(rangeText(r), 130, 190);
 
   g.fillStyle = text;
-  g.font = '900 150px "Doto", monospace';
+  g.font = '900 150px "Fraunces", serif';
   g.fillText(formatTotal(r.total_seconds), 130, 370);
 
   if (r.change_percent !== null) {
     g.fillStyle = r.change_percent >= 0 ? red : muted;
-    g.font = '400 34px "Space Mono", monospace';
+    g.font = '400 34px "DM Sans", sans-serif';
     const arrow = r.change_percent >= 0 ? "▲" : "▼";
     g.fillText(`${arrow} ${Math.abs(r.change_percent)}% VS LAST WEEK`, 130, 440);
   }
@@ -72,12 +72,12 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
   r.days.forEach((v, i) => {
     const h = Math.max(14, (v / max) * 260);
     const x = 130 + i * (bw + gap);
-    g.fillStyle = v > 0 ? red : dark ? "#2a2a2a" : "#d6d6d3";
+    g.fillStyle = v > 0 ? red : dark ? "#3a2c20" : "#e0cfa8";
     g.beginPath();
     g.roundRect(x, 800 - h, bw, h, 45);
     g.fill();
     g.fillStyle = muted;
-    g.font = '400 28px "Space Mono", monospace';
+    g.font = '400 28px "DM Sans", sans-serif';
     g.textAlign = "center";
     g.fillText(WEEKDAY_LETTERS[i], x + bw / 2, 850);
     g.textAlign = "left";
@@ -91,10 +91,10 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
   stats.forEach(([label, value], i) => {
     const x = 130 + i * 280;
     g.fillStyle = muted;
-    g.font = '400 24px "Space Mono", monospace';
+    g.font = '400 24px "DM Sans", sans-serif';
     g.fillText(label, x, 960);
     g.fillStyle = text;
-    g.font = '900 60px "Doto", monospace';
+    g.font = '900 60px "Fraunces", serif';
     g.fillText(value, x, 1040);
   });
 
@@ -121,7 +121,7 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
   g.arc(ox + 84 * s, oy + 24 * s, 8 * s, 0, Math.PI * 2);
   g.fill();
   g.fillStyle = muted;
-  g.font = '900 44px "Doto", monospace';
+  g.font = '900 44px "Fraunces", serif';
   g.fillText("studyquest", ox + 80, oy + 62);
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
@@ -187,7 +187,7 @@ export default function ReviewPage() {
               <div><span className="mono muted">SESSIONS</span><span className="stat-val">{data.sessions}</span></div>
               <div><span className="mono muted">BEST DAY</span><span className="stat-val">{data.best_day === null ? "—" : WEEKDAY_SHORT[data.best_day]}</span></div>
             </div>
-            <div className="rvf"><Logo size={26} fg="var(--text)" /><span style={{ fontFamily: "Poppins, sans-serif", fontWeight: 700 }}>studyquest</span></div>
+            <div className="rvf"><Logo size={26} fg="var(--text)" /><span style={{ fontFamily: "Fraunces, serif", fontWeight: 700 }}>studyquest</span></div>
           </div>
           <Pill icon="share" onClick={share}>Share as image</Pill>
           {msg && <p className="okline c">{msg}</p>}

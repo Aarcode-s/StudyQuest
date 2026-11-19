@@ -3,8 +3,8 @@ export type ThemeResolved = "light" | "dark";
 
 const KEY = "sq_theme";
 const BROWSER_COLOR: Record<ThemeResolved, string> = {
-  dark: "#000000",
-  light: "#EEEEED",
+  dark: "#1F1610",
+  light: "#F4E8CF",
 };
 
 export function getThemePref(): ThemePref {
@@ -14,7 +14,7 @@ export function getThemePref(): ThemePref {
   } catch {
     /* storage unavailable */
   }
-  return "dark";
+  return "light";
 }
 
 export function resolveTheme(pref: ThemePref): ThemeResolved {

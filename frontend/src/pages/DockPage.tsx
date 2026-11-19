@@ -22,7 +22,7 @@ export default function DockPage() {
   const timer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    setBrowserThemeColor("#000000");
+    setBrowserThemeColor("#1A120C");
     return () => applyTheme(getThemePref());
   }, []);
   useEffect(() => {
@@ -67,8 +67,8 @@ export default function DockPage() {
 
   const [dx, dy] = SHIFTS[shift];
   const text = formatClock(t.seconds);
-  // Doto digits are about 0.6 em wide; keep the clock inside the screen.
-  const clockSize = Math.max(40, Math.min((vp.w * 0.9) / (text.length * 0.6), vp.h * 0.6, 280));
+  // Fraunces digits are about 0.65 em wide; keep the clock inside the screen.
+  const clockSize = Math.max(40, Math.min((vp.w * 0.9) / (text.length * 0.65), vp.h * 0.6, 280));
 
   return (
     <div className="dockp" onClick={tap}>

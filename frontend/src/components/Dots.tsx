@@ -1,77 +1,6 @@
-import { Fragment, useMemo } from "react";
-import type { ReactNode } from "react";
-
 const PI = Math.PI;
 
-// ---------------------------------------------------------------- % sign
-// Doto draws "%" so that it looks like an X, so the app draws its own
-// dot-matrix percent sign from a 5 x 7 grid and uses it everywhere a Doto
-// number is followed by a percent.
-const PCT_ROWS = [
-  "11001",
-  "11010",
-  "00010",
-  "00100",
-  "01000",
-  "01011",
-  "10011",
-];
-
-export function Pct({ size }: { size: number }) {
-  const h = size * 0.7; // Doto capital height is about 0.7 em
-  const w = (h * 5) / 7;
-  return (
-    <svg
-      viewBox="0 0 5 7"
-      width={w}
-      height={h}
-      fill="currentColor"
-      aria-label="percent"
-      style={{ display: "inline-block", marginLeft: size * 0.06, verticalAlign: "baseline" }}
-    >
-      {PCT_ROWS.flatMap((row, y) =>
-        [...row].map((c, x) =>
-          c === "1" ? <circle key={`${x}-${y}`} cx={x + 0.5} cy={y + 0.5} r={0.42} /> : null,
-        ),
-      )}
-    </svg>
-  );
-}
-
-/** Doto draws ":" with a cross in the middle, so the clock draws its own. */
-function Colon({ size }: { size: number }) {
-  const d = size * 0.12;
-  const dot = (top: string) => (
-    <i
-      style={{
-        position: "absolute",
-        left: 0,
-        top,
-        width: d,
-        height: d,
-        borderRadius: "50%",
-        background: "currentColor",
-      }}
-    />
-  );
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        display: "inline-block",
-        position: "relative",
-        width: d,
-        height: size * 0.7,
-        margin: `0 ${size * 0.1}px`,
-      }}
-    >
-      {dot("24%")}
-      {dot("62%")}
-    </span>
-  );
-}
-
-/** Doto text where every "%" is drawn with the dot-matrix percent sign. */
+/** Clock and stat text in the retro display font. */
 export function DotText({
   children,
   size,
@@ -81,46 +10,11 @@ export function DotText({
   size: number;
   className?: string;
 }) {
-  const parts = children.split(/([%:])/);
   return (
     <span className={`dot ${className}`} style={{ fontSize: size, lineHeight: 1 }}>
-      {parts.map((p, i) =>
-        p === "%" ? (
-          <Pct key={i} size={size} />
-        ) : p === ":" ? (
-          <Colon key={i} size={size} />
-        ) : (
-          <Fragment key={i}>{p}</Fragment>
-        ),
-      )}
+      {children}
     </span>
   );
-}
-
-// ---------------------------------------------------------------- dot field
-function DotField() {
-  const dots = useMemo(() => {
-    const out: ReactNode[] = [];
-    const rmax = 146;
-    for (let r = 14; r <= rmax; r += 14) {
-      const n = Math.max(6, Math.floor((2 * PI * r) / 9.5));
-      for (let i = 0; i < n; i++) {
-        const a = (2 * PI * i) / n;
-        out.push(
-          <circle
-            key={`${r}-${i}`}
-            cx={150 + r * Math.cos(a)}
-            cy={150 + r * Math.sin(a)}
-            r={1.25}
-            fill="var(--dot-off)"
-            opacity={0.9 * (1 - r / (rmax * 1.35))}
-          />,
-        );
-      }
-    }
-    return out;
-  }, []);
-  return <>{dots}</>;
 }
 
 function pos(i: number, n: number, r: number): [number, number] {
@@ -129,22 +23,29 @@ function pos(i: number, n: number, r: number): [number, number] {
 }
 
 // ---------------------------------------------------------------- big ring clock
+/** A thick single-colour ring with thin outlines, like an old gauge. */
 export function RingClock({ frac }: { frac: number }) {
-  const lit = Math.round(72 * Math.min(1, Math.max(0, frac)));
+  const f = Math.min(1, Math.max(0, frac));
+  const r = 128;
+  const L = 2 * PI * r;
   return (
     <svg viewBox="0 0 300 300" className="ringsvg" aria-hidden="true">
-      {Array.from({ length: 72 }, (_, i) => {
-        const [x, y] = pos(i, 72, 138);
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r={i < lit ? 3.7 : 2.5}
-            fill={i < lit ? "var(--red)" : "var(--dot-off)"}
-          />
-        );
-      })}
+      <circle cx="150" cy="150" r={r} fill="none" stroke="var(--dot-off)" strokeWidth="26" />
+      {f > 0 && (
+        <circle
+          cx="150"
+          cy="150"
+          r={r}
+          fill="none"
+          stroke="var(--red)"
+          strokeWidth="26"
+          strokeLinecap="round"
+          strokeDasharray={`${L * f} ${L}`}
+          transform="rotate(-90 150 150)"
+        />
+      )}
+      <circle cx="150" cy="150" r={r + 13} fill="none" stroke="var(--outline)" strokeWidth="2" />
+      <circle cx="150" cy="150" r={r - 13} fill="none" stroke="var(--outline)" strokeWidth="2" />
     </svg>
   );
 }
@@ -177,7 +78,6 @@ export function DayDisc({ frac }: { frac: number }) {
   const lit = Math.round(n * Math.min(1, Math.max(0, frac)));
   return (
     <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
-      <DotField />
       {Array.from({ length: n }, (_, i) => {
         const [x, y] = pos(i, n, 84);
         return (
@@ -198,7 +98,6 @@ export function DayDisc({ frac }: { frac: number }) {
 export function WeekDisc({ values }: { values: (number | null)[] }) {
   return (
     <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
-      <DotField />
       {values.map((v, i) => {
         const [x, y] = pos(i, 7, 84);
         const [lx, ly] = pos(i, 7, 122);
@@ -211,7 +110,7 @@ export function WeekDisc({ values }: { values: (number | null)[] }) {
             ) : (
               <circle cx={x} cy={y} r={5 + 5 * Math.min(v, 1)} fill="var(--red)" opacity={0.35 + 0.65 * Math.min(v, 1)} />
             )}
-            <text x={lx} y={ly + 3} textAnchor="middle" fontFamily="Space Mono, monospace" fontSize="10" fill="var(--muted)">
+            <text x={lx} y={ly + 3} textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="10" fill="var(--muted)">
               {"MTWTFSS"[i]}
             </text>
           </g>
@@ -231,7 +130,6 @@ export function MonthDisc({
   const n = values.length;
   return (
     <svg viewBox="0 0 300 300" className="discsvg" aria-hidden="true">
-      <DotField />
       {values.map((v, i) => {
         const [x, y] = pos(i, n, 84);
         const k = Math.min(1, v ?? 0);
@@ -250,7 +148,7 @@ export function MonthDisc({
           </g>
         );
       })}
-      <text x="150" y="40" textAnchor="middle" fontFamily="Space Mono, monospace" fontSize="9.5" fill="var(--muted)">1</text>
+      <text x="150" y="40" textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--muted)">1</text>
     </svg>
   );
 }
@@ -301,7 +199,7 @@ export function TrendChart({
         />
       )}
       <line x1={px} x2={W - px} y1={gy} y2={gy} stroke="var(--red)" strokeWidth={1.5} strokeDasharray="3 5" />
-      <text x={W - px} y={gy - 7} textAnchor="end" fontFamily="Space Mono, monospace" fontSize="9.5" fill="var(--red)">
+      <text x={W - px} y={gy - 7} textAnchor="end" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--red)">
         {goalLabel}
       </text>
       <polyline
@@ -325,7 +223,7 @@ export function TrendChart({
       ))}
       {labels.map((l, i) =>
         i % step === 0 ? (
-          <text key={i} x={X(i)} y={H - 6} textAnchor="middle" fontFamily="Space Mono, monospace" fontSize="9.5" fill="var(--muted)">
+          <text key={i} x={X(i)} y={H - 6} textAnchor="middle" fontFamily="DM Sans, sans-serif" fontSize="9.5" fill="var(--muted)">
             {l}
           </text>
         ) : null,

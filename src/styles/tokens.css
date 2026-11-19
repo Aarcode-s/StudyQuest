@@ -1,0 +1,68 @@
+/* 70s retro: "light" is warm cream, "dark" is dark brown.
+   The accent is still called --red so existing code keeps working. */
+:root,
+:root[data-theme="light"] {
+  --bg: #f4e8cf;
+  --card: #fbf3de;
+  --card-hover: #fff8e8;
+  --card2: #eadbb8;
+  --line: rgba(59, 42, 30, 0.18);
+  --line-strong: rgba(59, 42, 30, 0.4);
+  --text: #3b2a1e;
+  --text-dim: #5a4433;
+  --muted: #6b5443;
+  --dot-off: #e0cfa8;
+  --dot-off2: #c9b58e;
+  --red: #b9431b;
+  --red-dim: rgba(185, 67, 27, 0.12);
+  --on-accent: #fff7e6;
+  --btn: #3b2a1e;
+  --btnt: #f4e8cf;
+  --mustard: #ebb52e;
+  --on-mustard: #3b2a1e;
+  --teal: #2f7f79;
+  --outline: #3b2a1e;
+  --hard: #3b2a1e;
+  --shadow: rgba(59, 42, 30, 0.18);
+  --glass-bg: #fbf3de;
+  --glass-border: #3b2a1e;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+  --radius-pill: 9999px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #1f1610;
+  --card: #2a1e15;
+  --card-hover: #33261b;
+  --card2: #3b2c1f;
+  --line: rgba(244, 232, 207, 0.16);
+  --line-strong: rgba(244, 232, 207, 0.34);
+  --text: #f4e8cf;
+  --text-dim: #cdb98f;
+  --muted: #a8926f;
+  --dot-off: #3a2c20;
+  --dot-off2: #54432f;
+  --red: #e2772e;
+  --red-dim: rgba(226, 119, 46, 0.16);
+  --on-accent: #1f1610;
+  --btn: #ebb52e;
+  --btnt: #1f1610;
+  --mustard: #ebb52e;
+  --on-mustard: #1f1610;
+  --teal: #4fb3ab;
+  --outline: #6e563b;
+  --hard: #0e0905;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --glass-bg: #2a1e15;
+  --glass-border: #6e563b;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+  --radius-pill: 9999px;
+  color-scheme: dark;
+}
