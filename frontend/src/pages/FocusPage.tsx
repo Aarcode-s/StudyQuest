@@ -168,7 +168,7 @@ export default function FocusPage() {
       <div className="top">
         <div className="brand">
           <Logo size={30} fg="var(--text)" />
-          <b className="dot">studyquest</b>
+          <b className="dot">foco</b>
         </div>
         <button
           className="roompill mono"

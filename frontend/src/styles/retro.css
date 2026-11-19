@@ -2,6 +2,7 @@
    Delete this file and its import to go back to the old look. */
 
 :root {
+  --pom-edge: #3b2a1e;
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
 }
@@ -120,3 +121,5 @@ h1, h2, h3, .ht, .sheet h2, .brand b, .prof b, .rcm b, .mm b, .hero .wm {
 }
 .dkc .rb { background: transparent; border-color: transparent; color: #f4e8cf; }
 .dkc .rb:hover { background: rgba(244, 232, 207, 0.12); border-color: transparent; }
+
+:root[data-theme="dark"] { --pom-edge: #f4e8cf; }

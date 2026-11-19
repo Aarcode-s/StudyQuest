@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DotText } from "../components/Dots";
 import Logo from "../components/Logo";
+import { drawPom } from "../lib/pom";
 import { Header, Pill } from "../components/ui";
 import { useFetch } from "../hooks/useFetch";
 import {
@@ -98,31 +99,11 @@ async function drawCard(r: WeekReview, dark: boolean): Promise<Blob | null> {
     g.fillText(value, x, 1040);
   });
 
-  // logo + wordmark
-  const s = 0.6;
-  const ox = 130;
-  const oy = 1130;
-  const pts: [number, number][] = [[16, 70], [34, 54], [50, 60], [68, 36], [84, 24]];
-  g.strokeStyle = text;
-  g.lineWidth = 4.5 * s;
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  g.beginPath();
-  pts.forEach(([x, y], i) => (i ? g.lineTo(ox + x * s, oy + y * s) : g.moveTo(ox + x * s, oy + y * s)));
-  g.stroke();
-  g.fillStyle = text;
-  pts.slice(0, -1).forEach(([x, y]) => {
-    g.beginPath();
-    g.arc(ox + x * s, oy + y * s, 5.2 * s, 0, Math.PI * 2);
-    g.fill();
-  });
-  g.fillStyle = red;
-  g.beginPath();
-  g.arc(ox + 84 * s, oy + 24 * s, 8 * s, 0, Math.PI * 2);
-  g.fill();
+  // mascot + wordmark
+  drawPom(g, 130, 1120, 0.7, dark ? "#f4e8cf" : "#3b2a1e");
   g.fillStyle = muted;
   g.font = '900 44px "Fraunces", serif';
-  g.fillText("studyquest", ox + 80, oy + 62);
+  g.fillText("foco", 220, 1176);
   return new Promise((res) => c.toBlob((b) => res(b), "image/png"));
 }
 
@@ -138,7 +119,7 @@ export default function ReviewPage() {
       setMsg("Could not create the image.");
       return;
     }
-    const file = new File([blob], "studyquest-week.png", { type: "image/png" });
+    const file = new File([blob], "foco-week.png", { type: "image/png" });
     try {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] });
@@ -150,7 +131,7 @@ export default function ReviewPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "studyquest-week.png";
+    a.download = "foco-week.png";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     setMsg("Image saved.");
@@ -187,7 +168,7 @@ export default function ReviewPage() {
               <div><span className="mono muted">SESSIONS</span><span className="stat-val">{data.sessions}</span></div>
               <div><span className="mono muted">BEST DAY</span><span className="stat-val">{data.best_day === null ? "—" : WEEKDAY_SHORT[data.best_day]}</span></div>
             </div>
-            <div className="rvf"><Logo size={26} fg="var(--text)" /><span style={{ fontFamily: "Fraunces, serif", fontWeight: 700 }}>studyquest</span></div>
+            <div className="rvf"><Logo size={26} fg="var(--text)" /><span style={{ fontFamily: "Fraunces, serif", fontWeight: 700 }}>foco</span></div>
           </div>
           <Pill icon="share" onClick={share}>Share as image</Pill>
           {msg && <p className="okline c">{msg}</p>}

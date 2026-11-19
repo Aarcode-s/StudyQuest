@@ -49,7 +49,7 @@ export default function AuthPage() {
     <form className="auth" onSubmit={submit}>
       <div className="hero">
         <Logo size={92} fg="var(--text)" />
-        <div className="dot wm">studyquest</div>
+        <div className="dot wm">foco</div>
         <div className="mono muted">Focus together</div>
       </div>
       <Segmented

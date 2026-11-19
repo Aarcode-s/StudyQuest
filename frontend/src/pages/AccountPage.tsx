@@ -54,7 +54,7 @@ export default function AccountPage() {
       const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = "studyquest.csv";
+      a.download = "foco.csv";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setMsg("Export saved.");
