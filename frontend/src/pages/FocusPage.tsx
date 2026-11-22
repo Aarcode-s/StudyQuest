@@ -48,7 +48,7 @@ function EndSheet({
     <Sheet open onClose={onClose}>
       <div className="mono muted c">Session complete</div>
       <div className="c" style={{ margin: "10px 0 28px" }}>
-        <DotText size={76}>{formatClock(session.focus_seconds)}</DotText>
+        <DotText size={64}>{formatClock(session.focus_seconds)}</DotText>
       </div>
       <div className="mono muted" style={{ marginBottom: 12 }}>What did you work on</div>
       <TagChips value={tag} onChange={setTag} />
