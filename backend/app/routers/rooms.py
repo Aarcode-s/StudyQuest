@@ -9,10 +9,12 @@ from app.schemas.room import JoinRequest, RoomCreate, RoomDetail, RoomRead, Room
 from app.schemas.insights import RoomWeek
 from app.schemas.stats import Leaderboard
 from app.schemas.status import RoomStatus
+from app.schemas.tags import MemberTags
 from app.services import insights as insights_service
 from app.services import rooms as room_service
 from app.services import stats as stats_service
 from app.services import status as status_service
+from app.services import tags as tags_service
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -152,3 +154,14 @@ def leave_room(room_id: int, user: CurrentUser, db: DbSession):
             status.HTTP_409_CONFLICT,
             detail="Owner cannot leave while other members remain",
         )
+
+@router.get(
+    "/{room_id}/members/{member_id}/tags",
+    response_model=MemberTags,
+    summary="One member's focus time today split by tag (members only)",
+)
+def member_tags(room_id: int, member_id: int, user: CurrentUser, db: DbSession):
+    try:
+        return tags_service.get_member_tags_today(db, room_id, user.id, member_id)
+    except room_service.NotAMemberError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Room not found")
