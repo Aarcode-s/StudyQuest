@@ -123,3 +123,9 @@ h1, h2, h3, .ht, .sheet h2, .brand b, .prof b, .rcm b, .mm b, .hero .wm {
 .dkc .rb:hover { background: rgba(244, 232, 207, 0.12); border-color: transparent; }
 
 :root[data-theme="dark"] { --pom-edge: #f4e8cf; }
+
+/* Week grid: day letters get the same width as the boxes, so Sunday lines up. */
+.dh { max-width: 24px; }
+
+/* Solid bar (used for the by-tag breakdown). */
+.bar.solid u { background: var(--red); }

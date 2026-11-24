@@ -130,3 +130,6 @@ export type WeekReview = {
   best_day_seconds: number;
   top_tag: string | null;
 };
+
+export type TagSlice = { tag: string; seconds: number };
+export type MemberTags = { hidden: boolean; total_seconds: number; tags: TagSlice[] };

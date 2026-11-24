@@ -9,7 +9,7 @@ import { useFetch } from "../hooks/useFetch";
 import { ApiError, api } from "../lib/api";
 import { formatClock, formatMinutes, formatTotal, WEEKDAY_LETTERS } from "../lib/format";
 import { setPrefs, usePrefs } from "../lib/prefs";
-import type { MemberStatus, RoomWeek } from "../lib/types";
+import type { MemberStatus, MemberTags, RoomWeek } from "../lib/types";
 import { useSession } from "../session/useSession";
 import type { Room } from "../lib/types";
 
@@ -42,6 +42,7 @@ export default function RoomPage() {
   const room = useFetch<Room>(`/rooms/${roomId}`, 15_000);
   const status = useFetch<{ members: MemberStatus[] }>(`/rooms/${roomId}/status`, 5000);
   const week = useFetch<RoomWeek>(tab === "week" || tab === "live" ? `/rooms/${roomId}/week` : null, 30_000);
+  const memberTags = useFetch<MemberTags>(picked && !picked.hidden ? `/rooms/${roomId}/members/${picked.user_id}/tags` : null);
 
   if (room.error && !room.data) {
     return (
@@ -279,6 +280,22 @@ export default function RoomPage() {
                 </>
               )}
               <div style={{ height: 24 }} />
+                            {!picked.hidden && memberTags.data && memberTags.data.tags.length > 0 && (
+                <div style={{ marginBottom: 22 }}>
+                  <div className="mono muted" style={{ marginBottom: 12 }}>TODAY BY TAG</div>
+                  {memberTags.data.tags.map((t) => (
+                    <div key={t.tag} style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <b>{t.tag === "No tag" || t.tag === "Other" ? t.tag : `# ${t.tag}`}</b>
+                        <span className="mono muted">{formatTotal(t.seconds)}</span>
+                      </div>
+                      <div className="bar solid">
+                        <u style={{ width: `${Math.round((t.seconds / (memberTags.data?.total_seconds || 1)) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <Pill kind="ghost" onClick={() => setPicked(null)}>Close</Pill>
             </>
           );
